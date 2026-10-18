@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Daily Motivation</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/static/css/base.css">
+    <link rel="stylesheet" href="/static/css/app.css">
+</head>
+<body>
+    <main class="quote-card">
+        <!-- Loading Overlay shown when queue is empty or updating settings -->
+        <div class="loader-overlay" id="cardLoader" aria-live="polite">
+            <div class="spinner"></div>
+            <div class="loader-text" id="loaderMsg">Crafting personalized quotes...</div>
+        </div>
+
+        <!-- Top Header Bar -->
+        <header class="top-bar">
+            <div class="pill-group">
+                <span class="pill" id="streakBadge">🔥 {{ streak }}</span>
+                <span class="buffer-pill" id="bufferStatus">
+                    <span class="tiny-spinner"></span> Syncing deck...
+                </span>
+            </div>
+            <span>{{ session_user }} • <a href="/logout" class="logout-link">Switch</a></span>
+        </header>
+
+        <!-- Animated Quote Display Stage -->
+        <section class="quote-stage" id="quoteStage">
+            <p class="quote-body" id="quoteText">“{{ quote_text }}”</p>
+        </section>
+
+        <!-- Profile Metadata & Customization Trigger -->
+        <div class="meta-row">
+            <span>🎯 {{ saved_goal }} • 🧠 {{ saved_mood }} • {{ voice_badge }}</span>
+            <button class="edit-trigger" onclick="toggleModal(true)" title="Edit Mood, Goal & Voice">✏️ Edit</button>
+        </div>
+
+        <audio id="voicePlayer" src="{{ audio_url }}" preload="auto"></audio>
+
+        <!-- Action Controls Dock -->
+        <footer class="action-dock">
+            <button class="icon-btn" id="likeBtn" onclick="sendFeedback('like')" title="Like this style (Hotkey: L)">
+                👍 <span>Like</span>
+            </button>
+            <button class="icon-btn" id="dislikeBtn" onclick="sendFeedback('dislike')" title="Not my style">
+                👎
+            </button>
+            <button class="icon-btn" onclick="playVoice()" title="Listen ({{ voice_badge }})">
+                🔊
+            </button>
+            <button class="icon-btn primary" onclick="showNextCard()" title="Instant Next Card (Hotkey: Space / →)">
+                ✨ More
+            </button>
+        </footer>
+    </main>
+
+    <!-- Modal for Editing Mood, Goal & Voice -->
+    <div class="modal-overlay" id="editModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 id="modalTitle">Personalize Your Coach</h3>
+                <button class="close-btn" onclick="toggleModal(false)" aria-label="Close modal">✕</button>
+            </div>
+            <form class="modal-form" method="post" action="/preferences" onsubmit="showModalLoading()">
+                <label class="field-label" for="moodInput">Current Mood</label>
+                <input id="moodInput" type="text" name="mood" value="{{ saved_mood }}" placeholder="e.g., focused, tired, hyped" required />
+
+                <label class="field-label" for="goalInput">Main Goal</label>
+                <input id="goalInput" type="text" name="goal" value="{{ saved_goal }}" placeholder="e.g., mastering GCP" required />
+
+                <label class="field-label" for="voiceSelect">Preferred AI Voice</label>
+                <select id="voiceSelect" name="voice">
+                    <option value="female" {{ female_selected }}>👩 Female (Warm & Expressive)</option>
+                    <option value="male" {{ male_selected }}>👨 Male (Deep & Calm)</option>
+                </select>
+
+                <button type="submit" class="save-btn">Save & Refresh Deck ✨</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Client-side Initial Data Injection -->
+    <script>
+        window.__APP_DATA__ = {
+            quoteText: {{ quote_text | tojson }},
+            streak: {{ streak }}
+        };
+    </script>
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

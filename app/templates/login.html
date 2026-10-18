@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sign In • Daily Motivation</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/static/css/base.css">
+    <link rel="stylesheet" href="/static/css/login.css">
+</head>
+<body>
+    <div class="login-card">
+        <h2>Welcome Back ✨</h2>
+        <p>Sign in once to stay logged in on this device</p>
+        
+        {% if error %}
+        <div class="error-banner">{{ error }}</div>
+        {% endif %}
+
+        <form class="login-form" method="post" action="/login">
+            <input type="text" name="username" placeholder="Your Name (e.g., Nawaz)" required autocomplete="username" />
+            <input type="text" name="goal" placeholder="Current Main Goal (optional)" />
+            <select name="voice">
+                <option value="female">🎙️ Voice: Female (Warm & Expressive)</option>
+                <option value="male">🎙️ Voice: Male (Deep & Calm)</option>
+            </select>
+            <input type="password" name="passcode" placeholder="App Passcode" required autocomplete="current-password" />
+            <button type="submit" class="login-btn">Continue →</button>
+        </form>
+    </div>
+</body>
+</html>
