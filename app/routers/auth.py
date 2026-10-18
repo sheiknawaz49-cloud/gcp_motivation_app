@@ -12,8 +12,9 @@ templates = Jinja2Templates(directory=str(settings.TEMPLATES_DIR))
 @router.get("/login", response_class=HTMLResponse)
 def login_page(request: Request, error: Optional[str] = None):
     return templates.TemplateResponse(
-        "login.html",
-        {"request": request, "error": error}
+        request=request,
+        name="login.html",
+        context={"error": error}
     )
 
 

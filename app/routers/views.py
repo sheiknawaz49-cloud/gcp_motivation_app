@@ -54,9 +54,9 @@ def minimal_app_ui(
     voice_badge = "👩 Female" if saved_voice == "female" else "👨 Male"
 
     return templates.TemplateResponse(
-        "app.html",
-        {
-            "request": request,
+        request=request,
+        name="app.html",
+        context={
             "session_user": user,
             "quote_text": quote_text,
             "audio_url": audio_url,
