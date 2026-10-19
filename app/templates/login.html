@@ -1,31 +1,149 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
+
 <head>
-    <meta charset="UTF-8">
-    <title>Sign In • Daily Motivation</title>
+    <title>Sign In • Motiveate AI</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="/static/css/base.css">
-    <link rel="stylesheet" href="/static/css/login.css">
+    <link rel="stylesheet" href="/static/css/base.css?v=2.2">
+    <link rel="stylesheet" href="/static/css/login.css?v=2.2">
+    <style>
+        .google-btn-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 50px;
+            margin: 28px 0 12px 0;
+            width: 100%;
+        }
+
+        .google-pill-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            background: #131314;
+            color: #e3e3e3;
+            border: 1px solid #3c4043;
+            padding: 12px 24px;
+            border-radius: 999px;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+            width: 100%;
+            max-width: 300px;
+            text-decoration: none;
+            user-select: none;
+        }
+
+        .google-pill-btn:hover {
+            background: #202124;
+            border-color: #5f6368;
+            color: #ffffff;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.55);
+        }
+
+        .google-pill-btn:active {
+            transform: translateY(0);
+        }
+    </style>
+    <!-- Official Google Identity Services SDK -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
+
 <body>
     <div class="login-card">
-        <h2>Welcome Back ✨</h2>
-        <p>Sign in once to stay logged in on this device</p>
-        
+        <h2>Motiveate AI ✨</h2>
+        <p>Your personalized daily mindset &amp; voice coach</p>
+
         {% if error %}
         <div class="error-banner">{{ error }}</div>
         {% endif %}
 
-        <form class="login-form" method="post" action="/login">
-            <input type="text" name="username" placeholder="Your Name (e.g., Nawaz)" required autocomplete="username" />
-            <input type="text" name="goal" placeholder="Current Main Goal (optional)" />
-            <select name="voice">
-                <option value="female">🎙️ Voice: Female (Warm & Expressive)</option>
-                <option value="male">🎙️ Voice: Male (Deep & Calm)</option>
-            </select>
-            <input type="password" name="passcode" placeholder="App Passcode" required autocomplete="current-password" />
-            <button type="submit" class="login-btn">Continue →</button>
+        <!-- Hidden form for automatic submission upon Google credential receipt -->
+        <form id="googleAuthForm" method="post" action="/auth/google" style="display: none;">
+            <input type="hidden" name="credential" id="googleCredentialInput" />
         </form>
+
+        <!-- Google Sign-In Button Container -->
+        <div class="google-btn-wrapper" id="googleBtnContainer">
+            <!-- Native branded Google button displays immediately and triggers prompt -->
+            <button type="button" class="google-pill-btn" id="fallbackGoogleBtn" onclick="triggerGooglePrompt()">
+                <svg width="20" height="20" viewBox="0 0 48 48">
+                    <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                    <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                    <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.79l7.97-6.2z"/>
+                    <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                    <path fill="none" d="M0 0h48v48H0z"/>
+                </svg>
+                <span>Continue with Google</span>
+            </button>
+        </div>
+
+        <p style="font-size: 11px; color: #6b7280; margin-top: 24px; margin-bottom: 0;">
+            One-click secure login powered by Google Identity
+        </p>
     </div>
+
+    <script>
+        const CLIENT_ID = "{{ google_client_id }}";
+
+        function handleCredentialResponse(response) {
+            if (response && response.credential) {
+                const input = document.getElementById("googleCredentialInput");
+                const form = document.getElementById("googleAuthForm");
+                if (input && form) {
+                    input.value = response.credential;
+                    form.submit();
+                }
+            }
+        }
+
+        function triggerGooglePrompt() {
+            if (window.google && google.accounts && google.accounts.id) {
+                google.accounts.id.prompt();
+            }
+        }
+
+        function initGoogle() {
+            if (window.google && google.accounts && google.accounts.id && CLIENT_ID) {
+                try {
+                    google.accounts.id.initialize({
+                        client_id: CLIENT_ID,
+                        callback: handleCredentialResponse,
+                        auto_select: false,
+                        context: 'signin'
+                    });
+
+                    const container = document.getElementById("googleBtnContainer");
+                    if (container) {
+                        // Render Google's official iframe button cleanly inside container
+                        google.accounts.id.renderButton(container, {
+                            type: "standard",
+                            theme: "filled_black",
+                            size: "large",
+                            text: "continue_with",
+                            shape: "pill",
+                            width: 300,
+                            logo_alignment: "left"
+                        });
+                    }
+                } catch (e) {
+                    console.error("Google init error:", e);
+                }
+            } else {
+                setTimeout(initGoogle, 150);
+            }
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initGoogle);
+        } else {
+            initGoogle();
+        }
+    </script>
 </body>
+
 </html>

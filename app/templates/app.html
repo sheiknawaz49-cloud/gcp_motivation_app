@@ -1,22 +1,145 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
+
 <head>
-    <meta charset="UTF-8">
     <title>Daily Motivation</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="/static/css/base.css">
-    <link rel="stylesheet" href="/static/css/app.css">
+    <link rel="stylesheet" href="/static/css/base.css?v=2.0">
+    <link rel="stylesheet" href="/static/css/app.css?v=2.0">
+    <!-- html2canvas for client-side $0 Story image generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        /* Embedded Modal Design System to guarantee clean rendering */
+        .share-modal-box {
+            max-width: 440px !important;
+            background: #111827 !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            border-radius: 22px !important;
+            padding: 24px !important;
+            box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.9) !important;
+        }
+
+        .share-options {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 10px !important;
+            margin-top: 14px !important;
+        }
+
+        .share-option-btn {
+            display: flex !important;
+            align-items: center !important;
+            gap: 14px !important;
+            background: #1e293b !important;
+            border: 1px solid rgba(255, 255, 255, 0.08) !important;
+            padding: 12px 16px !important;
+            border-radius: 14px !important;
+            color: #f8fafc !important;
+            cursor: pointer !important;
+            text-align: left !important;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
+            outline: none !important;
+            font-family: inherit !important;
+        }
+
+        .share-option-btn:hover {
+            background: #283548 !important;
+            border-color: #6366f1 !important;
+            transform: translateY(-1px) !important;
+            box-shadow: 0 6px 18px rgba(99, 102, 241, 0.2) !important;
+        }
+
+        .share-option-btn:active {
+            transform: translateY(0) !important;
+        }
+
+        .share-icon-wrap {
+            width: 40px !important;
+            height: 40px !important;
+            border-radius: 12px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            flex-shrink: 0 !important;
+            transition: transform 0.2s ease !important;
+        }
+
+        .share-option-btn:hover .share-icon-wrap {
+            transform: scale(1.08) !important;
+        }
+
+        .download-icon {
+            background: rgba(99, 102, 241, 0.18) !important;
+            color: #818cf8 !important;
+            border: 1px solid rgba(99, 102, 241, 0.3) !important;
+        }
+
+        .copy-img-icon {
+            background: rgba(168, 85, 247, 0.18) !important;
+            color: #c084fc !important;
+            border: 1px solid rgba(168, 85, 247, 0.3) !important;
+        }
+
+        .copy-text-icon {
+            background: rgba(16, 185, 129, 0.18) !important;
+            color: #34d399 !important;
+            border: 1px solid rgba(16, 185, 129, 0.3) !important;
+        }
+
+        .sys-share-icon {
+            background: rgba(245, 158, 11, 0.18) !important;
+            color: #fbbf24 !important;
+            border: 1px solid rgba(245, 158, 11, 0.3) !important;
+        }
+
+        .share-info {
+            display: flex !important;
+            flex-direction: column !important;
+            flex: 1 !important;
+            min-width: 0 !important;
+        }
+
+        .share-title {
+            font-size: 14px !important;
+            font-weight: 600 !important;
+            color: #f8fafc !important;
+            line-height: 1.3 !important;
+        }
+
+        .share-desc {
+            font-size: 12px !important;
+            color: #94a3b8 !important;
+            margin-top: 2px !important;
+            line-height: 1.35 !important;
+        }
+
+        .share-arrow {
+            font-size: 20px !important;
+            color: #64748b !important;
+            transition: all 0.2s ease !important;
+            flex-shrink: 0 !important;
+            font-weight: 300 !important;
+            margin-left: auto !important;
+        }
+
+        .share-option-btn:hover .share-arrow {
+            color: #818cf8 !important;
+            transform: translateX(3px) !important;
+        }
+    </style>
 </head>
+
 <body>
-    <main class="quote-card">
-        <!-- Loading Overlay shown when queue is empty or updating settings -->
-        <div class="loader-overlay" id="cardLoader" aria-live="polite">
+    <div class="card" id="mainCard">
+        <!-- Loading Overlay -->
+        <div class="loader-overlay" id="cardLoader">
             <div class="spinner"></div>
             <div class="loader-text" id="loaderMsg">Crafting personalized quotes...</div>
         </div>
 
-        <!-- Top Header Bar -->
-        <header class="top-bar">
+        <div class="top-bar">
             <div class="pill-group">
                 <span class="pill" id="streakBadge">🔥 {{ streak }}</span>
                 <span class="buffer-pill" id="bufferStatus">
@@ -24,56 +147,108 @@
                 </span>
             </div>
             <span>{{ session_user }} • <a href="/logout" class="logout-link">Switch</a></span>
-        </header>
+        </div>
 
-        <!-- Animated Quote Display Stage -->
-        <section class="quote-stage" id="quoteStage">
+        <!-- Animated Quote Stage -->
+        <div class="quote-stage" id="quoteStage">
             <p class="quote-body" id="quoteText">“{{ quote_text }}”</p>
-        </section>
+        </div>
 
-        <!-- Profile Metadata & Customization Trigger -->
         <div class="meta-row">
             <span>🎯 {{ saved_goal }} • 🧠 {{ saved_mood }} • {{ voice_badge }}</span>
             <button class="edit-trigger" onclick="toggleModal(true)" title="Edit Mood, Goal & Voice">✏️ Edit</button>
         </div>
 
-        <audio id="voicePlayer" src="{{ audio_url }}" preload="auto"></audio>
+        <audio id="voicePlayer" src="{{ audio_url }}"></audio>
 
-        <!-- Action Controls Dock -->
-        <footer class="action-dock">
-            <button class="icon-btn" id="likeBtn" onclick="sendFeedback('like')" title="Like this style (Hotkey: L)">
-                👍 <span>Like</span>
+        <!-- Upgraded Action Dock with Dedicated Download, Share & Voice Buttons -->
+        <div class="action-dock">
+            <button class="icon-btn" id="likeBtn" onclick="sendFeedback('like')" title="Like this style">
+                👍
             </button>
             <button class="icon-btn" id="dislikeBtn" onclick="sendFeedback('dislike')" title="Not my style">
                 👎
             </button>
-            <button class="icon-btn" onclick="playVoice()" title="Listen ({{ voice_badge }})">
+            <button class="icon-btn" id="voiceBtn" onclick="playVoice()" title="Listen ({{ voice_badge }})">
                 🔊
             </button>
-            <button class="icon-btn primary" onclick="showNextCard()" title="Instant Next Card (Hotkey: Space / →)">
+            <button class="icon-btn" id="downloadBtn" onclick="downloadQuoteCard()" title="Download Story Card (PNG)">
+                📥
+            </button>
+            <button class="icon-btn" id="shareBtn" onclick="openShareModal()" title="Share & Export Options">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="18" cy="5" r="3"></circle>
+                    <circle cx="6" cy="12" r="3"></circle>
+                    <circle cx="18" cy="19" r="3"></circle>
+                    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                    <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                </svg>
+            </button>
+            <button class="icon-btn primary" onclick="showNextCard()" title="Instant Next Card">
                 ✨ More
             </button>
-        </footer>
-    </main>
+        </div>
+    </div>
 
-    <!-- Modal for Editing Mood, Goal & Voice -->
-    <div class="modal-overlay" id="editModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <!-- Off-Screen 9:16 Vertical Story Card for High-Res Image Export (With Watermark) -->
+    <div id="storyExportWrapper" style="position: fixed; left: -9999px; top: 0;">
+        <div id="storyExportCard"
+            style="width: 540px; height: 960px; background: linear-gradient(145deg, #090d16 0%, #111827 55%, #1e1b4b 100%); color: #f8fafc; padding: 64px 48px; display: flex; flex-direction: column; justify-content: space-between; font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif; border-radius: 0;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span
+                    style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); padding: 8px 18px; border-radius: 999px; font-size: 16px; font-weight: 600; color: #e2e8f0;">
+                    🔥 Day <span id="exportStreak">{{ streak }}</span> Streak
+                </span>
+                <span style="color: #818cf8; font-size: 15px; font-weight: 600; letter-spacing: 0.04em;">
+                    🎯 {{ saved_goal }}
+                </span>
+            </div>
+
+            <div style="my: auto; padding: 0 10px;">
+                <div
+                    style="font-size: 56px; color: #6366f1; line-height: 1; margin-bottom: 16px; font-family: Georgia, serif;">
+                    “</div>
+                <p id="exportQuoteText"
+                    style="font-size: 34px; font-weight: 600; line-height: 1.48; color: #ffffff; margin: 0; letter-spacing: -0.01em;">
+                    {{ quote_text }}
+                </p>
+            </div>
+
+            <!-- Viral Watermark Footer (Free Marketing!) -->
+            <div
+                style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 24px; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <div style="font-size: 16px; font-weight: 700; color: #f8fafc;">✨ Motiveate AI</div>
+                    <div style="font-size: 13px; color: #94a3b8;">Personalized Daily Mindset Coach</div>
+                </div>
+                <div
+                    style="background: #6366f1; color: white; padding: 6px 14px; border-radius: 999px; font-size: 13px; font-weight: 600;">
+                    motiveate.app
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden Pop-up Modal for Editing Mood, Goal & Voice -->
+    <div class="modal-overlay" id="editModal">
         <div class="modal-box">
             <div class="modal-header">
-                <h3 id="modalTitle">Personalize Your Coach</h3>
-                <button class="close-btn" onclick="toggleModal(false)" aria-label="Close modal">✕</button>
+                <h3>Personalize Your Coach</h3>
+                <button class="close-btn" onclick="toggleModal(false)">✕</button>
             </div>
             <form class="modal-form" method="post" action="/preferences" onsubmit="showModalLoading()">
-                <label class="field-label" for="moodInput">Current Mood</label>
-                <input id="moodInput" type="text" name="mood" value="{{ saved_mood }}" placeholder="e.g., focused, tired, hyped" required />
+                <span class="field-label">Current Mood</span>
+                <input type="text" name="mood" value="{{ saved_mood }}" placeholder="e.g., focused, tired, hyped"
+                    required />
 
-                <label class="field-label" for="goalInput">Main Goal</label>
-                <input id="goalInput" type="text" name="goal" value="{{ saved_goal }}" placeholder="e.g., mastering GCP" required />
+                <span class="field-label">Main Goal</span>
+                <input type="text" name="goal" value="{{ saved_goal }}" placeholder="e.g., mastering GCP" required />
 
-                <label class="field-label" for="voiceSelect">Preferred AI Voice</label>
-                <select id="voiceSelect" name="voice">
-                    <option value="female" {{ female_selected }}>👩 Female (Warm & Expressive)</option>
-                    <option value="male" {{ male_selected }}>👨 Male (Deep & Calm)</option>
+                <span class="field-label">Preferred AI Voice</span>
+                <select name="voice">
+                    <option value="female" {{ 'selected' if saved_voice=='female' else '' }}>👩 Female (Warm &
+                        Expressive)</option>
+                    <option value="male" {{ 'selected' if saved_voice=='male' else '' }}>👨 Male (Deep & Calm)</option>
                 </select>
 
                 <button type="submit" class="save-btn">Save & Refresh Deck ✨</button>
@@ -81,13 +256,87 @@
         </div>
     </div>
 
-    <!-- Client-side Initial Data Injection -->
+    <!-- Clean & Modern Pop-up Modal for Export & Share -->
+    <div class="modal-overlay" id="shareModal">
+        <div class="modal-box share-modal-box">
+            <div class="modal-header">
+                <div>
+                    <h3 style="margin: 0; font-size: 17px; font-weight: 600; color: #f8fafc;">Share &amp; Export</h3>
+                    <p style="margin: 2px 0 0 0; font-size: 12px; color: #94a3b8;">Save or share your personalized motivation card</p>
+                </div>
+                <button class="close-btn" onclick="closeShareModal()" aria-label="Close">✕</button>
+            </div>
+            <div class="share-options">
+                <button class="share-option-btn" id="modalDownloadBtn" onclick="downloadFromShare()">
+                    <span class="share-icon-wrap download-icon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                    </span>
+                    <div class="share-info">
+                        <span class="share-title">Download Story Card</span>
+                        <span class="share-desc">High-Res 1080×1920 PNG saved to PC</span>
+                    </div>
+                    <span class="share-arrow">›</span>
+                </button>
+
+                <button class="share-option-btn" id="modalCopyImgBtn" onclick="copyImageToClipboard()">
+                    <span class="share-icon-wrap copy-img-icon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                        </svg>
+                    </span>
+                    <div class="share-info">
+                        <span class="share-title">Copy Image to Clipboard</span>
+                        <span class="share-desc">Paste (Ctrl+V) into WhatsApp Web, Slack, Discord</span>
+                    </div>
+                    <span class="share-arrow">›</span>
+                </button>
+
+                <button class="share-option-btn" id="modalCopyTextBtn" onclick="copyQuoteText()">
+                    <span class="share-icon-wrap copy-text-icon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                        </svg>
+                    </span>
+                    <div class="share-info">
+                        <span class="share-title">Copy Quote Text</span>
+                        <span class="share-desc">Copy quote text to paste anywhere</span>
+                    </div>
+                    <span class="share-arrow">›</span>
+                </button>
+
+                <button class="share-option-btn" id="modalSysShareBtn" onclick="triggerSystemShare()">
+                    <span class="share-icon-wrap sys-share-icon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="18" cy="5" r="3"></circle>
+                            <circle cx="6" cy="12" r="3"></circle>
+                            <circle cx="18" cy="19" r="3"></circle>
+                            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                        </svg>
+                    </span>
+                    <div class="share-info">
+                        <span class="share-title">System Share Sheet</span>
+                        <span class="share-desc">Send via Windows apps or mobile share tray</span>
+                    </div>
+                    <span class="share-arrow">›</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
-        window.__APP_DATA__ = {
-            quoteText: {{ quote_text | tojson }},
-            streak: {{ streak }}
+        window.INITIAL_STATE = {
+            quote: {{ quote_text | tojson }},
+            audioUrl: {{ audio_url | tojson }},
+            streak: {{ streak | tojson }}
         };
     </script>
-    <script src="/static/js/app.js"></script>
+    <script src="/static/js/app.js?v=2.0"></script>
 </body>
+
 </html>

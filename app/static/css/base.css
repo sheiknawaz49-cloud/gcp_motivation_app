@@ -43,3 +43,13 @@ body {
     overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
 }
+
+button {
+    font-family: inherit;
+    border: none;
+    background: none;
+    color: inherit;
+    cursor: pointer;
+    text-align: inherit;
+}
+

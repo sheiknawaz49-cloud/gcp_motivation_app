@@ -28,3 +28,6 @@ class UserProfile(BaseModel):
     liked_quotes: List[str] = []
     disliked_quotes: List[str] = []
     updated_at: Optional[str] = None
+
+class TTSRequest(BaseModel):
+    quote: str

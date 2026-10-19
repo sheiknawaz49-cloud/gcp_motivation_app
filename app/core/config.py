@@ -18,6 +18,8 @@ class Settings:
     BUCKET_NAME: str = os.getenv("AUDIO_BUCKET_NAME") or os.getenv("BUCKET_NAME") or f"{PROJECT_ID}-audio"
     APP_PASSCODE: str = os.getenv("APP_PASSCODE") or "my-super-secret-123"
     GEMINI_MODEL: str = os.getenv("GEMINI_MODEL") or "gemini-2.5-flash"
+    GOOGLE_CLIENT_ID: str = os.environ.get("GOOGLE_CLIENT_ID", "")
+    SECRET_KEY: str = os.environ.get("SECRET_KEY", "super-secret-cookie-signing-key-2026")
 
     # Directory Paths
     APP_DIR: Path = Path(__file__).resolve().parent.parent

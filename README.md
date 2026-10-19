@@ -10,7 +10,7 @@ The codebase is organized following clean architecture principles, separating co
 
 ```text
 motiveate/
-│
+│ 
 ├── .env.example              # Environment variables template
 ├── .env                      # Local environment configuration (gitignored)
 ├── .gitignore                # Git exclusions
