@@ -2,11 +2,12 @@ from fastapi import APIRouter, Request, Depends
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from app.core.dependencies import get_current_user
+from app.core.config import settings
 from app.services.gcp import db
 from app.services.quote_service import generate_quote_batch
 
 router = APIRouter()
-templates = Jinja2Templates(directory="app/templates")
+templates = Jinja2Templates(directory=str(settings.TEMPLATES_DIR))
 
 @router.get("/")
 def home(user: dict = Depends(get_current_user)):
@@ -33,9 +34,9 @@ def minimal_app_ui(request: Request, user: dict = Depends(get_current_user)):
     voice_badge = "👩 Female" if saved_voice == "female" else "👨 Male"
 
     return templates.TemplateResponse(
-        "app.html",
-        {
-            "request": request,
+        request=request,
+        name="app.html",
+        context={
             "session_user": name,
             "user_picture": user.get("picture", ""),
             "quote_text": data.get("last_quote", ""),

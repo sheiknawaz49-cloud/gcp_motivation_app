@@ -11,14 +11,14 @@ from app.services.gcp import db
 
 logger = logging.getLogger("motivation-app")
 router = APIRouter()
-templates = Jinja2Templates(directory="app/templates")
+templates = Jinja2Templates(directory=str(settings.TEMPLATES_DIR))
 
 @router.get("/login", response_class=HTMLResponse)
 def login_page(request: Request, error: str = None):
     return templates.TemplateResponse(
-        "login.html",
-        {
-            "request": request,
+        request=request,
+        name="login.html",
+        context={
             "google_client_id": settings.GOOGLE_CLIENT_ID,
             "error": error
         }
