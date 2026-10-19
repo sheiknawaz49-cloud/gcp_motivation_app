@@ -155,8 +155,8 @@
         </div>
 
         <div class="meta-row">
-            <span>🎯 {{ saved_goal }} • 🧠 {{ saved_mood }} • {{ voice_badge }}</span>
-            <button class="edit-trigger" onclick="toggleModal(true)" title="Edit Mood, Goal & Voice">✏️ Edit</button>
+            <span>🎯 {{ saved_goal }} • 🧠 {{ saved_mood }} • {{ voice_badge }} • {{ lang_badge }}</span>
+            <button class="edit-trigger" onclick="toggleModal(true)" title="Edit Mood, Goal, Voice & Language">✏️ Edit</button>
         </div>
 
         <audio id="voicePlayer" src="{{ audio_url }}"></audio>
@@ -229,7 +229,7 @@
         </div>
     </div>
 
-    <!-- Hidden Pop-up Modal for Editing Mood, Goal & Voice -->
+    <!-- Hidden Pop-up Modal for Editing Mood, Goal, Voice & Language -->
     <div class="modal-overlay" id="editModal">
         <div class="modal-box">
             <div class="modal-header">
@@ -244,6 +244,12 @@
                 <span class="field-label">Main Goal</span>
                 <input type="text" name="goal" value="{{ saved_goal }}" placeholder="e.g., mastering GCP" required />
 
+                <span class="field-label">Language / భాష</span>
+                <select name="language">
+                    <option value="en" {{ 'selected' if saved_language=='en' else '' }}>🇬🇧 English</option>
+                    <option value="te" {{ 'selected' if saved_language=='te' else '' }}>🇮🇳 Telugu (తెలుగు)</option>
+                </select>
+
                 <span class="field-label">Preferred AI Voice</span>
                 <select name="voice">
                     <option value="female" {{ 'selected' if saved_voice=='female' else '' }}>👩 Female (Warm &
@@ -252,6 +258,12 @@
                 </select>
 
                 <button type="submit" class="save-btn">Save & Refresh Deck ✨</button>
+
+                <div style="text-align: center; margin-top: 8px; padding-top: 10px; border-top: 1px solid rgba(255, 255, 255, 0.08);">
+                    <a href="/onboarding" style="color: #818cf8; font-size: 12.5px; text-decoration: none; font-weight: 500; display: inline-flex; align-items: center; gap: 5px;">
+                        <span>🎯</span> Calibrate Interests & AI Persona →
+                    </a>
+                </div>
             </form>
         </div>
     </div>

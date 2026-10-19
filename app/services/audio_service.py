@@ -7,17 +7,41 @@ from app.services.gcp import tts_client, storage_client
 logger = logging.getLogger("motivation-app")
 
 
-def generate_audio(text: str, username: str, voice_gender: str = "female") -> str:
-    """Converts quote text to a unique MP3 in Google Cloud Storage so prefetched clips don't overwrite each other."""
+VOICE_CONFIG = {
+    "en": {
+        "female": "en-US-Journey-F",
+        "male": "en-US-Journey-D",
+        "language_code": "en-US",
+    },
+    "te": {
+        "female": "te-IN-Standard-A",
+        "male": "te-IN-Standard-B",
+        "language_code": "te-IN",
+    },
+}
+
+
+def generate_audio(
+    text: str,
+    username: str,
+    voice_gender: str = "female",
+    language: str = "en"
+) -> str:
+    """Converts quote text to a unique MP3 in Google Cloud Storage with multi-lingual voice support."""
     if not tts_client or not storage_client:
         logger.warning("TTS or Storage client is not initialized.")
         return ""
 
     try:
-        voice_name = settings.VOICE_MAP.get(voice_gender.lower(), "en-US-Journey-F")
+        lang_key = "te" if language and language.strip().lower().startswith("te") else "en"
+        cfg = VOICE_CONFIG.get(lang_key, VOICE_CONFIG["en"])
+        voice_gender_clean = (voice_gender or "female").lower()
+        voice_name = cfg.get(voice_gender_clean, cfg["female"])
+        lang_code = cfg["language_code"]
+
         synthesis_input = texttospeech.SynthesisInput(text=text)
         voice = texttospeech.VoiceSelectionParams(
-            language_code="en-US", name=voice_name
+            language_code=lang_code, name=voice_name
         )
         audio_config = texttospeech.AudioConfig(
             audio_encoding=texttospeech.AudioEncoding.MP3

@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Calibrate Your Mindset Coach | Motiveate</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/static/css/base.css?v=2.0">
+    <link rel="stylesheet" href="/static/css/app.css?v=2.0">
+    <style>
+        .onboarding-container {
+            width: 100%;
+            max-width: 580px;
+            margin: 24px auto;
+        }
+
+        .onboarding-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: 28px;
+            padding: 36px 32px;
+            box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(14px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .onboarding-header {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+
+        .step-badge {
+            background: rgba(99, 102, 241, 0.15);
+            color: #818cf8;
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            font-size: 12px;
+            font-weight: 600;
+            padding: 5px 14px;
+            border-radius: var(--radius-pill);
+            display: inline-block;
+            margin-bottom: 12px;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        .onboarding-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #f8fafc;
+            letter-spacing: -0.02em;
+            margin-bottom: 8px;
+        }
+
+        .onboarding-subtitle {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            max-width: 460px;
+            margin: 0 auto;
+        }
+
+        .section-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #e2e8f0;
+            margin-bottom: 6px;
+            letter-spacing: 0.01em;
+        }
+
+        .section-desc {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+            line-height: 1.4;
+        }
+
+        /* Language Toggle Cards */
+        .lang-options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .lang-card {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            background: #1e293b;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 13px 16px;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: var(--transition-standard);
+            user-select: none;
+        }
+
+        .lang-card input {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .lang-card.selected {
+            background: rgba(99, 102, 241, 0.2);
+            border-color: #6366f1;
+            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.35);
+        }
+
+        .lang-flag {
+            font-size: 20px;
+        }
+
+        .lang-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: #f8fafc;
+        }
+
+        .lang-sub {
+            font-size: 11px;
+            color: #94a3b8;
+            margin-left: 2px;
+        }
+
+        /* Interests 3x3 Grid */
+        .interests-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 26px;
+        }
+
+        @media (max-width: 480px) {
+            .interests-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .interest-card {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #1e293b;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 14px;
+            padding: 12px 10px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            user-select: none;
+        }
+
+        .interest-card input {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .interest-card:hover {
+            background: #283548;
+            border-color: rgba(99, 102, 241, 0.4);
+            transform: translateY(-1px);
+        }
+
+        .interest-card.selected {
+            background: rgba(99, 102, 241, 0.22);
+            border-color: #6366f1;
+            box-shadow: 0 4px 14px rgba(99, 102, 241, 0.25);
+            transform: translateY(-2px);
+        }
+
+        .interest-content {
+            font-size: 13.5px;
+            font-weight: 500;
+            color: #f1f5f9;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .interest-card.selected .interest-content {
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        /* Magic Prompt Box */
+        .magic-prompt-wrap {
+            background: #0d131f;
+            border: 1px dashed rgba(99, 102, 241, 0.4);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 12px;
+            position: relative;
+        }
+
+        .prompt-text {
+            font-size: 13px;
+            line-height: 1.5;
+            color: #cbd5e1;
+            font-style: italic;
+            margin-bottom: 12px;
+            user-select: all;
+        }
+
+        .copy-prompt-btn {
+            background: rgba(99, 102, 241, 0.16);
+            color: #a5b4fc;
+            border: 1px solid rgba(99, 102, 241, 0.35);
+            border-radius: var(--radius-pill);
+            padding: 7px 16px;
+            font-size: 12.5px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            transition: var(--transition-standard);
+        }
+
+        .copy-prompt-btn:hover {
+            background: rgba(99, 102, 241, 0.3);
+            color: #ffffff;
+            border-color: #6366f1;
+            transform: translateY(-1px);
+        }
+
+        .copy-prompt-btn.copied {
+            background: rgba(16, 185, 129, 0.2);
+            border-color: #10b981;
+            color: #34d399;
+        }
+
+        /* Persona Textarea */
+        .persona-textarea {
+            width: 100%;
+            background: #0f172a;
+            border: 1px solid var(--border-subtle);
+            border-radius: 14px;
+            padding: 14px;
+            color: #f8fafc;
+            font-size: 13.5px;
+            line-height: 1.5;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 100px;
+            outline: none;
+            transition: var(--transition-standard);
+            box-sizing: border-box;
+            margin-bottom: 24px;
+        }
+
+        .persona-textarea:focus {
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
+        }
+
+        /* Action Buttons */
+        .onboarding-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .submit-btn {
+            width: 100%;
+            background: var(--accent);
+            color: white;
+            padding: 14px;
+            border-radius: 14px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: var(--transition-standard);
+            box-shadow: 0 4px 18px rgba(99, 102, 241, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .submit-btn:hover {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 22px rgba(99, 102, 241, 0.55);
+        }
+
+        .skip-link {
+            font-size: 13px;
+            color: #94a3b8;
+            text-decoration: none;
+            padding: 8px 14px;
+            border-radius: var(--radius-pill);
+            transition: var(--transition-standard);
+        }
+
+        .skip-link:hover {
+            color: #e2e8f0;
+            background: rgba(255, 255, 255, 0.05);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="onboarding-container">
+        <div class="onboarding-card">
+            <div class="onboarding-header">
+                <span class="step-badge">✨ Mindset Calibration</span>
+                <h1 class="onboarding-title">Tune Your Personal Coach</h1>
+                <p class="onboarding-subtitle">
+                    Welcome {{ session_user }}. Tell your AI coach what drives you so every daily quote resonates with your goals and passions.
+                </p>
+            </div>
+
+            <form method="post" action="/onboarding" id="onboardingForm">
+                <!-- 1. Language Preference -->
+                <span class="section-label">1. Preferred Language / భాష</span>
+                <p class="section-desc">Select which language you want your daily quotes and voice guidance in.</p>
+                <div class="lang-options-grid">
+                    <label class="lang-card {{ 'selected' if saved_language != 'te' else '' }}">
+                        <input type="radio" name="language" value="en" {{ 'checked' if saved_language != 'te' else '' }} onchange="updateLangCardSelection()">
+                        <span class="lang-flag">🇬🇧</span>
+                        <div>
+                            <span class="lang-name">English</span>
+                            <span class="lang-sub">(Default)</span>
+                        </div>
+                    </label>
+
+                    <label class="lang-card {{ 'selected' if saved_language == 'te' else '' }}">
+                        <input type="radio" name="language" value="te" {{ 'checked' if saved_language == 'te' else '' }} onchange="updateLangCardSelection()">
+                        <span class="lang-flag">🇮🇳</span>
+                        <div>
+                            <span class="lang-name">Telugu</span>
+                            <span class="lang-sub">(తెలుగు)</span>
+                        </div>
+                    </label>
+                </div>
+
+                <!-- 2. Interactive Selectable Mini-Cards for Interests -->
+                <span class="section-label">2. What drives you? (Select Interests)</span>
+                <p class="section-desc">Your coach weaves metaphors and wisdom from these areas into your quotes.</p>
+
+                {% set interest_list = [
+                    ("Sports 🏏", "Sports"),
+                    ("Movies 🎬", "Movies"),
+                    ("Book Reading 📚", "Book Reading"),
+                    ("Swimming 🏊", "Swimming"),
+                    ("Devotion 🙏", "Devotion"),
+                    ("Fitness 💪", "Fitness"),
+                    ("Coding & Tech 💻", "Coding & Tech"),
+                    ("Business 🚀", "Business"),
+                    ("Music 🎵", "Music")
+                ] %}
+
+                <div class="interests-grid">
+                    {% for label, key in interest_list %}
+                    {% set is_selected = (label in saved_interests) or (key in saved_interests) %}
+                    <label class="interest-card {{ 'selected' if is_selected else '' }}">
+                        <input type="checkbox" name="interests" value="{{ label }}" {{ 'checked' if is_selected else '' }} onchange="this.closest('.interest-card').classList.toggle('selected', this.checked)">
+                        <span class="interest-content">{{ label }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+
+                <!-- 3. AI Persona Extraction / Magic Prompt -->
+                <span class="section-label">3. AI Persona & Coaching Style Profile (Optional)</span>
+                <p class="section-desc">
+                    Extract your personality DNA from ChatGPT, Claude, or Gemini in 1 click:
+                </p>
+
+                <div class="magic-prompt-wrap">
+                    <div class="prompt-text" id="magicPromptText">
+                        "Based on our past conversations, write a 4-sentence summary of my core interests, biggest goals, personality traits, and what kind of coaching/motivation style resonates best with me."
+                    </div>
+                    <button type="button" class="copy-prompt-btn" id="copyPromptBtn" onclick="copyMagicPrompt()">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                        </svg>
+                        <span id="copyPromptLabel">Copy Magic Prompt</span>
+                    </button>
+                </div>
+
+                <textarea class="persona-textarea" name="ai_persona_summary" id="aiPersonaInput"
+                    placeholder="Paste the output here (e.g. 'Ambitious developer striving to ship SaaS products, thrives on stoic discipline and direct, no-fluff motivation...')...">{{ saved_persona }}</textarea>
+
+                <!-- Actions -->
+                <div class="onboarding-actions">
+                    <button type="submit" class="submit-btn" id="submitBtn">
+                        Save &amp; Start Coaching →
+                    </button>
+                    <a href="/onboarding/skip" class="skip-link">
+                        Skip for now (Adapt over time via Likes/Dislikes) →
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function updateLangCardSelection() {
+            document.querySelectorAll('.lang-card').forEach(card => {
+                const radio = card.querySelector('input[type="radio"]');
+                if (radio && radio.checked) {
+                    card.classList.add('selected');
+                } else {
+                    card.classList.remove('selected');
+                }
+            });
+        }
+
+        async function copyMagicPrompt() {
+            const promptText = "Based on our past conversations, write a 4-sentence summary of my core interests, biggest goals, personality traits, and what kind of coaching/motivation style resonates best with me.";
+            const btn = document.getElementById('copyPromptBtn');
+            const label = document.getElementById('copyPromptLabel');
+
+            try {
+                if (navigator.clipboard && window.isSecureContext) {
+                    await navigator.clipboard.writeText(promptText);
+                } else {
+                    const textarea = document.createElement("textarea");
+                    textarea.value = promptText;
+                    textarea.style.position = "fixed";
+                    textarea.style.left = "-999999px";
+                    document.body.appendChild(textarea);
+                    textarea.focus();
+                    textarea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textarea);
+                }
+
+                btn.classList.add('copied');
+                label.innerText = 'Copied to Clipboard! ✨';
+                setTimeout(() => {
+                    btn.classList.remove('copied');
+                    label.innerText = 'Copy Magic Prompt';
+                }, 2500);
+            } catch (err) {
+                console.error("Copy failed:", err);
+                label.innerText = 'Press Ctrl+C to copy';
+            }
+        }
+
+        // Add loading state when submitting
+        document.getElementById('onboardingForm').addEventListener('submit', function() {
+            const btn = document.getElementById('submitBtn');
+            btn.innerHTML = '<span class="tiny-spinner"></span> Calibrating Your Coach...';
+            btn.style.opacity = '0.85';
+            btn.style.pointerEvents = 'none';
+        });
+    </script>
+</body>
+
+</html>

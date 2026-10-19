@@ -31,3 +31,7 @@ class UserProfile(BaseModel):
 
 class TTSRequest(BaseModel):
     quote: str
+
+
+class MobileContextRequest(BaseModel):
+    app_usage_context: str = Field(..., description="Mobile app context or screen-time summary")

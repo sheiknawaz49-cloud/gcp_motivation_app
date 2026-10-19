@@ -7,7 +7,7 @@ from google.auth.transport import requests as google_requests
 
 from app.core.config import settings
 from app.core.dependencies import create_session_cookie
-from app.services.gcp import db
+from app.services.user_service import UserService
 
 logger = logging.getLogger("motivation-app")
 router = APIRouter()
@@ -38,29 +38,7 @@ def google_auth_callback(credential: str = Form(...)):
         picture = idinfo.get("picture", "")
 
         # Create or update user's Firestore profile keyed by their unique email
-        user_ref = db.collection("users").document(email)
-        user_doc = user_ref.get()
-        if not user_doc.exists:
-            # Check legacy profile (e.g. 'nawaz') to keep existing streak and preferences intact
-            legacy_doc = db.collection("users").document(name.lower()).get()
-            legacy_data = legacy_doc.to_dict() if (legacy_doc and legacy_doc.exists) else {}
-
-            user_ref.set({
-                "email": email,
-                "name": name,
-                "picture": picture,
-                "goal": legacy_data.get("goal", "building great daily habits"),
-                "last_mood": legacy_data.get("last_mood", "focused"),
-                "preferred_voice": legacy_data.get("preferred_voice", "female"),
-                "streak": legacy_data.get("streak", 1),
-                "last_quote": legacy_data.get("last_quote", ""),
-                "audio_url": legacy_data.get("audio_url", ""),
-                "liked_quotes": legacy_data.get("liked_quotes", []),
-                "disliked_quotes": legacy_data.get("disliked_quotes", []),
-                "is_pro": False
-            }, merge=True)
-        else:
-            user_ref.set({"name": name, "picture": picture}, merge=True)
+        UserService.init_google_user(email=email, name=name, picture=picture)
 
         # Set 30-day signed session cookie
         token = create_session_cookie(email=email, name=name, picture=picture)
@@ -96,21 +74,7 @@ def login_submit(
     email = clean_user.lower()
     name = clean_user.capitalize()
 
-    user_ref = db.collection("users").document(email)
-    user_doc = user_ref.get()
-    if not user_doc.exists:
-        user_ref.set({
-            "email": email,
-            "name": name,
-            "picture": "",
-            "goal": "building great daily habits",
-            "last_mood": "focused",
-            "preferred_voice": "female",
-            "streak": 1,
-            "is_pro": False
-        }, merge=True)
-    else:
-        user_ref.set({"name": name}, merge=True)
+    UserService.init_passcode_user(email=email, name=name)
 
     token = create_session_cookie(email=email, name=name, picture="")
     response = RedirectResponse(url="/app", status_code=303)
