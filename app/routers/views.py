@@ -66,10 +66,13 @@ async def onboarding_submit(request: Request, user: dict = Depends(get_current_u
         language=language
     )
 
-    # Immediately regenerate personalized quote matching the new context & language
+    # Immediately regenerate personalized quote matching the new context & language if daily_count < 3
     try:
         user_ref = UserService.get_user_ref(email)
-        generate_quote_batch(user_ref, name=name, count=1, language=language)
+        user_data = UserService.get_user_data(email)
+        daily_count, _, _ = UserService.get_daily_status(user_data)
+        if daily_count < 3:
+            generate_quote_batch(user_ref, name=name, count=1, language=language)
     except Exception as e:
         logger.error(f"Error generating post-onboarding quote: {e}")
 
@@ -99,7 +102,15 @@ def minimal_app_ui(request: Request, user: dict = Depends(get_current_user)):
         return RedirectResponse(url="/onboarding", status_code=303)
 
     user_ref = UserService.get_user_ref(email)
-    if not user_data.get("last_quote"):
+    # Sync streak and daily status in Firestore for today
+    daily_status = UserService.sync_user_daily_and_streak(email, user_data)
+    user_data.update(daily_status)
+
+    daily_cards = user_data.get("daily_cards", [])
+    daily_count = user_data.get("daily_count", 0)
+
+    # If user has no quote at all and daily_count < 3, generate initial card
+    if not user_data.get("last_quote") and daily_count < 3:
         data, _ = generate_quote_batch(
             user_ref,
             name,
@@ -109,10 +120,19 @@ def minimal_app_ui(request: Request, user: dict = Depends(get_current_user)):
     else:
         data = user_data
 
+    daily_cards = data.get("daily_cards", [])
+    daily_count = data.get("daily_count", 0)
+    current_quote = data.get("last_quote", "")
+    current_audio = data.get("audio_url", "")
+    if daily_cards and isinstance(daily_cards, list) and len(daily_cards) > 0:
+        current_quote = daily_cards[0].get("quote", current_quote)
+        current_audio = daily_cards[0].get("audio_url", current_audio)
+
     saved_voice = data.get("preferred_voice", "female")
     voice_badge = "👩 Female" if saved_voice == "female" else "👨 Male"
     saved_language = data.get("language", "en")
     lang_badge = "🇮🇳 తెలుగు" if saved_language == "te" else "🇬🇧 EN"
+    saved_theme_mode = data.get("theme_mode", "auto")
 
     return templates.TemplateResponse(
         request=request,
@@ -120,14 +140,18 @@ def minimal_app_ui(request: Request, user: dict = Depends(get_current_user)):
         context={
             "session_user": name,
             "user_picture": user.get("picture", ""),
-            "quote_text": data.get("last_quote", ""),
-            "audio_url": data.get("audio_url", ""),
+            "quote_text": current_quote,
+            "audio_url": current_audio,
             "streak": data.get("streak", 1),
+            "max_streak": data.get("max_streak", 1),
+            "daily_count": daily_count,
+            "daily_cards": daily_cards,
             "saved_goal": data.get("goal", "Daily growth"),
             "saved_mood": data.get("last_mood", "focused"),
             "saved_voice": saved_voice,
             "voice_badge": voice_badge,
             "saved_language": saved_language,
-            "lang_badge": lang_badge
+            "lang_badge": lang_badge,
+            "saved_theme_mode": saved_theme_mode
         }
     )

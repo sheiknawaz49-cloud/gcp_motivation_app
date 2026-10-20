@@ -1,12 +1,12 @@
 import logging
-from fastapi import APIRouter, Request, Form
+from fastapi import APIRouter, Request, Form, Depends
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
 
 from app.core.config import settings
-from app.core.dependencies import create_session_cookie
+from app.core.dependencies import create_session_cookie, get_current_user
 from app.services.user_service import UserService
 
 logger = logging.getLogger("motivation-app")
@@ -90,5 +90,22 @@ def login_submit(
 @router.get("/logout")
 def logout():
     response = RedirectResponse(url="/login", status_code=303)
+    response.delete_cookie("session_token")
+    return response
+
+@router.post("/auth/delete-account")
+def delete_account(user: dict = Depends(get_current_user)):
+    """Permanently deletes user account, Firestore profile, and GCS audio files."""
+    if not user:
+        return RedirectResponse(url="/login", status_code=303)
+
+    email = user["email"]
+    name = user.get("name", "")
+    UserService.delete_user_account(email=email, name=name)
+
+    response = RedirectResponse(
+        url="/login?error=Your+account+and+data+have+been+permanently+deleted",
+        status_code=303
+    )
     response.delete_cookie("session_token")
     return response

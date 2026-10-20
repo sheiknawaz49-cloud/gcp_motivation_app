@@ -3,6 +3,7 @@ import logging
 from datetime import datetime, timezone
 from google.genai import types
 from app.services.gcp import ai_client
+from app.services.user_service import UserService, MAX_DAILY_CARDS
 
 logger = logging.getLogger("motivation-app")
 
@@ -15,16 +16,46 @@ def generate_quote_batch(
     voice: str = None,
     language: str = None
 ):
-    """Generates a batch of N personalized quotes WITHOUT upfront TTS cost."""
-    user_doc = user_ref.get()
-    user_data = user_doc.to_dict() if user_doc.exists else {}
+    """Generates a batch of N personalized quotes respecting the strict 3 cards/day limit."""
+    user_doc = user_ref.get() if user_ref else None
+    user_data = user_doc.to_dict() if (user_doc and user_doc.exists) else {}
+
+    # 1. Date-based streak calculation (never increment on every batch call!)
+    streak, max_streak, today_str = UserService.calculate_streak(user_data)
+
+    # 2. Daily card quota calculation for Asia/Kolkata timezone
+    daily_count, daily_cards, _ = UserService.get_daily_status(user_data)
+    remaining = max(0, MAX_DAILY_CARDS - daily_count)
 
     saved_goal = goal if goal else user_data.get("goal", "building great habits")
     saved_mood = mood if mood else user_data.get("last_mood", "focused")
     saved_voice = voice if voice else user_data.get("preferred_voice", "female")
     saved_language = language if language else user_data.get("language", "en")
-    streak = user_data.get("streak", 0) + 1
     last_quote = user_data.get("last_quote", "")
+
+    # If limit reached or no cards requested, return without calling Vertex AI
+    if remaining <= 0 or count <= 0:
+        synced_profile = {
+            **user_data,
+            "goal": saved_goal,
+            "last_mood": saved_mood,
+            "preferred_voice": saved_voice,
+            "language": saved_language,
+            "streak": streak,
+            "max_streak": max_streak,
+            "last_streak_date": today_str,
+            "last_active_date": today_str,
+            "daily_count": daily_count,
+            "daily_cards": daily_cards,
+            "limit_reached": True,
+            "remaining": 0,
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }
+        if user_ref:
+            user_ref.set(synced_profile, merge=True)
+        return synced_profile, []
+
+    actual_count = min(count, remaining)
 
     interests = user_data.get("interests", [])
     ai_persona_summary = user_data.get("ai_persona_summary", "")
@@ -53,19 +84,19 @@ def generate_quote_batch(
     if saved_language == "te":
         prompt = (
             f"You are an inspiring, minimalist personal mindset coach fluent in Telugu. "
-            f"Write {count} distinct, short, punchy 1-to-2 sentence motivational quotes for {name} in authentic, natural, inspiring Telugu script (తెలుగు). "
+            f"Write {actual_count} distinct, short, punchy 1-to-2 sentence motivational quotes for {name} in authentic, natural, inspiring Telugu script (తెలుగు). "
             f"Current mood: '{saved_mood}'. Main goal: '{saved_goal}'. "
             f"Do not repeat: '{last_quote}'.{context_str}\n"
-            f"Return ONLY a JSON array of {count} strings written in Telugu script."
+            f"Return ONLY a JSON array of {actual_count} strings written in Telugu script."
         )
         default_fallback = "ప్రతిరోజూ చేసే చిన్న ప్రయత్నాలే అద్భుతమైన విజయాలకు దారితీస్తాయి."
     else:
         prompt = (
             f"You are an insightful, minimalist personal coach. "
-            f"Write {count} distinct, short, punchy 1-to-2 sentence motivational quotes for {name}. "
+            f"Write {actual_count} distinct, short, punchy 1-to-2 sentence motivational quotes for {name}. "
             f"Current mood: '{saved_mood}'. Main goal: '{saved_goal}'. "
             f"Do not repeat: '{last_quote}'.{context_str}\n"
-            f"Return ONLY a JSON array of {count} strings."
+            f"Return ONLY a JSON array of {actual_count} strings."
         )
         default_fallback = "Small daily improvements over time lead to stunning results."
 
@@ -84,10 +115,12 @@ def generate_quote_batch(
         logger.error(f"Batch AI generation error: {e}")
         quotes_list = [default_fallback]
 
-    quotes_list = [str(q).strip().strip('"') for q in quotes_list[:count]]
+    quotes_list = [str(q).strip().strip('"') for q in quotes_list[:actual_count]]
 
     # Audio is empty initially; generated on-demand only when user clicks 🔊!
-    cards = [{"quote": q, "audio_url": ""} for q in quotes_list]
+    new_cards = [{"quote": q, "audio_url": ""} for q in quotes_list]
+    updated_daily_cards = list(daily_cards) + new_cards
+    updated_daily_count = daily_count + len(new_cards)
 
     updated_profile = {
         "name": name,
@@ -96,11 +129,17 @@ def generate_quote_batch(
         "preferred_voice": saved_voice,
         "language": saved_language,
         "streak": streak,
-        "last_quote": cards[0]["quote"],
+        "max_streak": max_streak,
+        "last_streak_date": today_str,
+        "last_active_date": today_str,
+        "daily_count": updated_daily_count,
+        "daily_cards": updated_daily_cards,
+        "last_quote": new_cards[0]["quote"] if new_cards else last_quote,
         "audio_url": "",  # Reset until user requests audio for this quote
         "liked_quotes": user_data.get("liked_quotes", []),
         "disliked_quotes": user_data.get("disliked_quotes", []),
         "updated_at": datetime.now(timezone.utc).isoformat()
     }
-    user_ref.set(updated_profile, merge=True)
-    return updated_profile, cards
+    if user_ref:
+        user_ref.set(updated_profile, merge=True)
+    return updated_profile, new_cards

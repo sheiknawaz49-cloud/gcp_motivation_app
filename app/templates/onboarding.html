@@ -2,459 +2,475 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <title>Calibrate Your Mindset Coach | Motiveate</title>
+    <title>Personalize • Motiveate AI</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="/static/css/base.css?v=2.0">
-    <link rel="stylesheet" href="/static/css/app.css?v=2.0">
+    <link rel="stylesheet" href="/static/css/base.css">
     <style>
-        .onboarding-container {
-            width: 100%;
-            max-width: 580px;
-            margin: 24px auto;
+        * {
+            box-sizing: border-box;
         }
 
-        .onboarding-card {
-            background: var(--bg-surface);
-            border: 1px solid var(--border-color);
-            border-radius: 28px;
-            padding: 36px 32px;
-            box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.9);
-            backdrop-filter: blur(14px);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .onboarding-header {
-            text-align: center;
-            margin-bottom: 28px;
-        }
-
-        .step-badge {
-            background: rgba(99, 102, 241, 0.15);
-            color: #818cf8;
-            border: 1px solid rgba(99, 102, 241, 0.3);
-            font-size: 12px;
-            font-weight: 600;
-            padding: 5px 14px;
-            border-radius: var(--radius-pill);
-            display: inline-block;
-            margin-bottom: 12px;
-            letter-spacing: 0.04em;
-            text-transform: uppercase;
-        }
-
-        .onboarding-title {
-            font-size: 24px;
-            font-weight: 700;
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif;
+            background: radial-gradient(circle at 50% 0%, #171c30 0%, #090d16 70%);
             color: #f8fafc;
-            letter-spacing: -0.02em;
-            margin-bottom: 8px;
-        }
-
-        .onboarding-subtitle {
-            font-size: 14px;
-            color: var(--text-secondary);
-            line-height: 1.5;
-            max-width: 460px;
-            margin: 0 auto;
-        }
-
-        .section-label {
-            display: block;
-            font-size: 13px;
-            font-weight: 600;
-            color: #e2e8f0;
-            margin-bottom: 6px;
-            letter-spacing: 0.01em;
-        }
-
-        .section-desc {
-            font-size: 12px;
-            color: var(--text-muted);
-            margin-bottom: 12px;
-            line-height: 1.4;
-        }
-
-        /* Language Toggle Cards */
-        .lang-options-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin-bottom: 24px;
-        }
-
-        .lang-card {
-            position: relative;
             display: flex;
-            align-items: center;
             justify-content: center;
-            gap: 10px;
-            background: #1e293b;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .minimal-card {
+            background: rgba(17, 24, 39, 0.72);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.08);
-            padding: 13px 16px;
-            border-radius: 14px;
-            cursor: pointer;
-            transition: var(--transition-standard);
-            user-select: none;
+            border-radius: 28px;
+            max-width: 370px;
+            width: 100%;
+            padding: 28px 24px 24px 24px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.65);
+            text-align: center;
         }
 
-        .lang-card input {
-            position: absolute;
-            opacity: 0;
-            pointer-events: none;
+        /* Fullscreen Animated Loader */
+        .fullscreen-loader {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(9, 13, 22, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            z-index: 9999;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
         }
 
-        .lang-card.selected {
-            background: rgba(99, 102, 241, 0.2);
-            border-color: #6366f1;
-            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.35);
+        .fullscreen-loader.active {
+            display: flex;
+            animation: fadeIn 0.3s ease;
         }
 
-        .lang-flag {
-            font-size: 20px;
+        .spinner-large {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(99, 102, 241, 0.2);
+            border-top-color: #6366f1;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-bottom: 24px;
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.3);
         }
 
-        .lang-name {
-            font-size: 14px;
-            font-weight: 600;
+        .loader-msg {
+            font-size: 15px;
+            font-weight: 500;
             color: #f8fafc;
+            letter-spacing: 0.02em;
+            animation: pulseText 2s ease-in-out infinite;
         }
 
-        .lang-sub {
-            font-size: 11px;
-            color: #94a3b8;
-            margin-left: 2px;
-        }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
 
-        /* Interests 3x3 Grid */
-        .interests-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            margin-bottom: 26px;
-        }
-
-        @media (max-width: 480px) {
-            .interests-grid {
-                grid-template-columns: repeat(2, 1fr);
+            to {
+                opacity: 1;
             }
         }
 
-        .interest-card {
-            position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #1e293b;
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 14px;
-            padding: 12px 10px;
-            cursor: pointer;
-            text-align: center;
-            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-            user-select: none;
+        @keyframes pulseText {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.6;
+            }
         }
 
-        .interest-card input {
-            position: absolute;
-            opacity: 0;
-            pointer-events: none;
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
         }
 
-        .interest-card:hover {
-            background: #283548;
-            border-color: rgba(99, 102, 241, 0.4);
-            transform: translateY(-1px);
-        }
-
-        .interest-card.selected {
-            background: rgba(99, 102, 241, 0.22);
-            border-color: #6366f1;
-            box-shadow: 0 4px 14px rgba(99, 102, 241, 0.25);
-            transform: translateY(-2px);
-        }
-
-        .interest-content {
-            font-size: 13.5px;
-            font-weight: 500;
-            color: #f1f5f9;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .interest-card.selected .interest-content {
-            font-weight: 600;
-            color: #ffffff;
-        }
-
-        /* Magic Prompt Box */
-        .magic-prompt-wrap {
-            background: #0d131f;
-            border: 1px dashed rgba(99, 102, 241, 0.4);
-            border-radius: 16px;
-            padding: 16px;
-            margin-bottom: 12px;
-            position: relative;
-        }
-
-        .prompt-text {
-            font-size: 13px;
-            line-height: 1.5;
-            color: #cbd5e1;
-            font-style: italic;
-            margin-bottom: 12px;
-            user-select: all;
-        }
-
-        .copy-prompt-btn {
-            background: rgba(99, 102, 241, 0.16);
-            color: #a5b4fc;
-            border: 1px solid rgba(99, 102, 241, 0.35);
-            border-radius: var(--radius-pill);
-            padding: 7px 16px;
-            font-size: 12.5px;
-            font-weight: 600;
-            cursor: pointer;
+        /* Scalable Minimal Language Selector */
+        .lang-select-wrap {
             display: inline-flex;
             align-items: center;
-            gap: 7px;
-            transition: var(--transition-standard);
+            background: rgba(9, 13, 22, 0.75);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 999px;
+            padding: 4px 12px;
+            margin-bottom: 18px;
+            font-size: 12px;
+            color: #cbd5e1;
         }
 
-        .copy-prompt-btn:hover {
-            background: rgba(99, 102, 241, 0.3);
-            color: #ffffff;
-            border-color: #6366f1;
-            transform: translateY(-1px);
-        }
-
-        .copy-prompt-btn.copied {
-            background: rgba(16, 185, 129, 0.2);
-            border-color: #10b981;
-            color: #34d399;
-        }
-
-        /* Persona Textarea */
-        .persona-textarea {
-            width: 100%;
-            background: #0f172a;
-            border: 1px solid var(--border-subtle);
-            border-radius: 14px;
-            padding: 14px;
+        .lang-select-wrap select {
+            background: transparent;
+            border: none;
             color: #f8fafc;
-            font-size: 13.5px;
-            line-height: 1.5;
-            font-family: inherit;
-            resize: vertical;
-            min-height: 100px;
+            font-size: 12px;
+            font-weight: 500;
             outline: none;
-            transition: var(--transition-standard);
-            box-sizing: border-box;
-            margin-bottom: 24px;
+            cursor: pointer;
+            padding-left: 4px;
         }
 
-        .persona-textarea:focus {
-            border-color: #6366f1;
-            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
+        .lang-select-wrap select option {
+            background: #111827;
+            color: #f8fafc;
         }
 
-        /* Action Buttons */
-        .onboarding-actions {
+        h2 {
+            margin: 0 0 4px 0;
+            font-size: 20px;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+        }
+
+        .subtitle {
+            color: #6b7280;
+            font-size: 12.5px;
+            margin: 0 0 20px 0;
+        }
+
+        /* Minimal Topic Chips */
+        .chips-wrap {
             display: flex;
-            flex-direction: column;
-            gap: 12px;
-            align-items: center;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 7px;
+            margin-bottom: 18px;
         }
 
-        .submit-btn {
+        .chip {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: #cbd5e1;
+            padding: 7px 13px;
+            border-radius: 999px;
+            font-size: 12.5px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.16s ease;
+            user-select: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .chip:hover {
+            border-color: rgba(255, 255, 255, 0.2);
+            color: #ffffff;
+        }
+
+        .chip.selected {
+            background: rgba(99, 102, 241, 0.18);
+            border-color: #818cf8;
+            color: #ffffff;
+            box-shadow: 0 0 12px rgba(99, 102, 241, 0.2);
+        }
+
+        .chip.extra-topic {
+            display: none;
+        }
+
+        .chip.extra-topic.visible {
+            display: inline-flex;
+        }
+
+        .chip.more-btn {
+            border-style: dashed;
+            color: #818cf8;
+            border-color: rgba(129, 140, 248, 0.35);
+        }
+
+        /* Custom Topic Input */
+        .custom-topic-input {
+            display: none;
             width: 100%;
-            background: var(--accent);
+            background: rgba(9, 13, 22, 0.65);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 8px 12px;
             color: white;
-            padding: 14px;
+            font-size: 12px;
+            outline: none;
+            margin-bottom: 14px;
+            text-align: center;
+        }
+
+        .custom-topic-input.visible {
+            display: block;
+        }
+
+        .custom-topic-input:focus {
+            border-color: #6366f1;
+        }
+
+        /* Collapsible AI Memory Import */
+        .ai-drawer-toggle {
+            background: none;
+            border: none;
+            color: #6b7280;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            padding: 4px 8px;
+            margin-bottom: 14px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            transition: color 0.15s;
+        }
+
+        .ai-drawer-toggle:hover {
+            color: #a5b4fc;
+        }
+
+        .ai-drawer {
+            display: none;
+            background: rgba(9, 13, 22, 0.65);
+            border: 1px solid rgba(255, 255, 255, 0.07);
             border-radius: 14px;
-            font-size: 15px;
+            padding: 10px 12px;
+            margin-bottom: 16px;
+            text-align: left;
+        }
+
+        .ai-drawer.open {
+            display: block;
+        }
+
+        .drawer-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+
+        .drawer-hint {
+            font-size: 10.5px;
+            color: #6b7280;
+        }
+
+        .copy-chip {
+            background: rgba(99, 102, 241, 0.15);
+            border: 1px solid rgba(99, 102, 241, 0.35);
+            color: #a5b4fc;
+            padding: 3px 9px;
+            border-radius: 999px;
+            font-size: 10.5px;
             font-weight: 600;
             cursor: pointer;
-            border: none;
-            transition: var(--transition-standard);
-            box-shadow: 0 4px 18px rgba(99, 102, 241, 0.4);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
         }
 
-        .submit-btn:hover {
-            background: var(--accent-hover);
-            transform: translateY(-1px);
-            box-shadow: 0 6px 22px rgba(99, 102, 241, 0.55);
+        textarea {
+            width: 100%;
+            background: transparent;
+            border: none;
+            color: #f8fafc;
+            font-size: 12px;
+            font-family: inherit;
+            outline: none;
+            resize: none;
+            line-height: 1.4;
+        }
+
+        textarea::placeholder {
+            color: #4b5563;
+        }
+
+        /* Bottom Actions */
+        .btn-continue {
+            background: #6366f1;
+            color: #ffffff;
+            border: none;
+            width: 100%;
+            padding: 12px;
+            border-radius: 14px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            margin-bottom: 12px;
+        }
+
+        .btn-continue:hover {
+            background: #4f46e5;
         }
 
         .skip-link {
-            font-size: 13px;
-            color: #94a3b8;
+            display: inline-block;
+            color: #6b7280;
+            font-size: 12px;
             text-decoration: none;
-            padding: 8px 14px;
-            border-radius: var(--radius-pill);
-            transition: var(--transition-standard);
         }
 
         .skip-link:hover {
-            color: #e2e8f0;
-            background: rgba(255, 255, 255, 0.05);
+            color: #9ca3af;
         }
     </style>
 </head>
 
 <body>
-    <div class="onboarding-container">
-        <div class="onboarding-card">
-            <div class="onboarding-header">
-                <span class="step-badge">✨ Mindset Calibration</span>
-                <h1 class="onboarding-title">Tune Your Personal Coach</h1>
-                <p class="onboarding-subtitle">
-                    Welcome {{ session_user }}. Tell your AI coach what drives you so every daily quote resonates with your goals and passions.
-                </p>
+    <!-- 🌟 Beautiful Animated Loader Overlay 🌟 -->
+    <div class="fullscreen-loader" id="loadingOverlay">
+        <div class="spinner-large"></div>
+        <div class="loader-msg" id="loaderMessage">Personalizing your AI coach...</div>
+    </div>
+
+    <div class="minimal-card">
+        <!-- Replaced standard submit with JS interception -->
+        <form method="post" action="/onboarding" id="onboardingForm" onsubmit="handleFormSubmit(event)">
+
+            <div class="lang-select-wrap">
+                <span>🌐</span>
+                <select name="language">
+                    <option value="en" {{ 'selected' if (saved_lang or 'en' )=='en' else '' }}>English</option>
+                    <option value="te" {{ 'selected' if saved_lang=='te' else '' }}>తెలుగు (Telugu)</option>
+                </select>
             </div>
 
-            <form method="post" action="/onboarding" id="onboardingForm">
-                <!-- 1. Language Preference -->
-                <span class="section-label">1. Preferred Language / భాష</span>
-                <p class="section-desc">Select which language you want your daily quotes and voice guidance in.</p>
-                <div class="lang-options-grid">
-                    <label class="lang-card {{ 'selected' if saved_language != 'te' else '' }}">
-                        <input type="radio" name="language" value="en" {{ 'checked' if saved_language != 'te' else '' }} onchange="updateLangCardSelection()">
-                        <span class="lang-flag">🇬🇧</span>
-                        <div>
-                            <span class="lang-name">English</span>
-                            <span class="lang-sub">(Default)</span>
-                        </div>
-                    </label>
+            <h2>Personalize Your Space</h2>
+            <p class="subtitle">Pick a few vibes, or skip to start right away</p>
 
-                    <label class="lang-card {{ 'selected' if saved_language == 'te' else '' }}">
-                        <input type="radio" name="language" value="te" {{ 'checked' if saved_language == 'te' else '' }} onchange="updateLangCardSelection()">
-                        <span class="lang-flag">🇮🇳</span>
-                        <div>
-                            <span class="lang-name">Telugu</span>
-                            <span class="lang-sub">(తెలుగు)</span>
-                        </div>
-                    </label>
-                </div>
-
-                <!-- 2. Interactive Selectable Mini-Cards for Interests -->
-                <span class="section-label">2. What drives you? (Select Interests)</span>
-                <p class="section-desc">Your coach weaves metaphors and wisdom from these areas into your quotes.</p>
-
-                {% set interest_list = [
-                    ("Sports 🏏", "Sports"),
-                    ("Movies 🎬", "Movies"),
-                    ("Book Reading 📚", "Book Reading"),
-                    ("Swimming 🏊", "Swimming"),
-                    ("Devotion 🙏", "Devotion"),
-                    ("Fitness 💪", "Fitness"),
-                    ("Coding & Tech 💻", "Coding & Tech"),
-                    ("Business 🚀", "Business"),
-                    ("Music 🎵", "Music")
+            <input type="hidden" name="interests" id="interestsInput" value="{{ ','.join(saved_interests or []) }}">
+            <div class="chips-wrap" id="chipsContainer">
+                {% set core_topics = [
+                ("Fitness", "💪"),
+                ("Coding & Tech", "💻"),
+                ("Movies", "🎬"),
+                ("Devotion", "🙏"),
+                ("Business", "🚀")
+                ] %}
+                {% set extra_topics = [
+                ("Sports", "🏏"),
+                ("Book Reading", "📚"),
+                ("Swimming", "🏊"),
+                ("Music", "🎵")
                 ] %}
 
-                <div class="interests-grid">
-                    {% for label, key in interest_list %}
-                    {% set is_selected = (label in saved_interests) or (key in saved_interests) %}
-                    <label class="interest-card {{ 'selected' if is_selected else '' }}">
-                        <input type="checkbox" name="interests" value="{{ label }}" {{ 'checked' if is_selected else '' }} onchange="this.closest('.interest-card').classList.toggle('selected', this.checked)">
-                        <span class="interest-content">{{ label }}</span>
-                    </label>
-                    {% endfor %}
+                {% for topic, icon in core_topics %}
+                <div class="chip {{ 'selected' if saved_interests and topic in saved_interests else '' }}"
+                    data-topic="{{ topic }}" onclick="toggleInterest(this)">
+                    <span>{{ icon }}</span><span>{{ topic }}</span>
                 </div>
+                {% endfor %}
 
-                <!-- 3. AI Persona Extraction / Magic Prompt -->
-                <span class="section-label">3. AI Persona & Coaching Style Profile (Optional)</span>
-                <p class="section-desc">
-                    Extract your personality DNA from ChatGPT, Claude, or Gemini in 1 click:
-                </p>
-
-                <div class="magic-prompt-wrap">
-                    <div class="prompt-text" id="magicPromptText">
-                        "Based on our past conversations, write a 4-sentence summary of my core interests, biggest goals, personality traits, and what kind of coaching/motivation style resonates best with me."
-                    </div>
-                    <button type="button" class="copy-prompt-btn" id="copyPromptBtn" onclick="copyMagicPrompt()">
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                        </svg>
-                        <span id="copyPromptLabel">Copy Magic Prompt</span>
-                    </button>
+                {% for topic, icon in extra_topics %}
+                <div class="chip extra-topic {{ 'selected visible' if saved_interests and topic in saved_interests else '' }}"
+                    data-topic="{{ topic }}" onclick="toggleInterest(this)">
+                    <span>{{ icon }}</span><span>{{ topic }}</span>
                 </div>
+                {% endfor %}
 
-                <textarea class="persona-textarea" name="ai_persona_summary" id="aiPersonaInput"
-                    placeholder="Paste the output here (e.g. 'Ambitious developer striving to ship SaaS products, thrives on stoic discipline and direct, no-fluff motivation...')...">{{ saved_persona }}</textarea>
+                <div class="chip more-btn" id="moreTopicsBtn" onclick="expandTopics()">+ More</div>
+            </div>
 
-                <!-- Actions -->
-                <div class="onboarding-actions">
-                    <button type="submit" class="submit-btn" id="submitBtn">
-                        Save &amp; Start Coaching →
-                    </button>
-                    <a href="/onboarding/skip" class="skip-link">
-                        Skip for now (Adapt over time via Likes/Dislikes) →
-                    </a>
+            <input type="text" id="customTopicInput" class="custom-topic-input"
+                placeholder="+ Type your own interest (e.g., Chess, Running)..." />
+
+            <button type="button" class="ai-drawer-toggle" onclick="toggleDrawer()">
+                ✨ Import AI persona <span id="drawerArrow">▾</span>
+            </button>
+
+            <div class="ai-drawer {{ 'open' if saved_persona else '' }}" id="aiDrawer">
+                <div class="drawer-header">
+                    <span class="drawer-hint">Copy prompt → Paste AI summary</span>
+                    <button type="button" class="copy-chip" id="copyBtn" onclick="copyMagicPrompt()">📋 Copy</button>
                 </div>
-            </form>
-        </div>
+                <textarea name="ai_persona_summary" rows="2"
+                    placeholder="Paste your 4-sentence summary from ChatGPT or Gemini...">{{ saved_persona or '' }}</textarea>
+            </div>
+
+            <button type="submit" class="btn-continue">Continue →</button>
+            <a href="/onboarding/skip" class="skip-link">Skip for now</a>
+        </form>
     </div>
 
     <script>
-        function updateLangCardSelection() {
-            document.querySelectorAll('.lang-card').forEach(card => {
-                const radio = card.querySelector('input[type="radio"]');
-                if (radio && radio.checked) {
-                    card.classList.add('selected');
-                } else {
-                    card.classList.remove('selected');
-                }
-            });
+        const MAGIC_PROMPT = "Based on our past conversations, write a 4-sentence summary of my core interests, biggest goals, personality traits, and what kind of coaching/motivation style resonates best with me.";
+        const selectedTopics = new Set(document.getElementById('interestsInput').value.split(',').map(s => s.trim()).filter(Boolean));
+
+        /* ✨ Loading Screen Logic ✨ */
+        const loadingMessages = [
+            "Tuning the AI engine...",
+            "Analyzing your mindset & interests...",
+            "Crafting your first daily quote...",
+            "Hang tight, getting things ready..."
+        ];
+
+        function handleFormSubmit(event) {
+            event.preventDefault(); // Stop instant submission
+            mergeCustomTopics(); // Finalize topics
+
+            // Show frosted glass overlay
+            document.getElementById('loadingOverlay').classList.add('active');
+
+            // Cycle through cool messages every 1.5 seconds
+            let msgIndex = 0;
+            const msgEl = document.getElementById('loaderMessage');
+            setInterval(() => {
+                msgEl.innerText = loadingMessages[msgIndex];
+                msgIndex = (msgIndex + 1) % loadingMessages.length;
+            }, 1800);
+
+            // Give the UI a tiny moment to animate before freezing the page for the network post
+            setTimeout(() => {
+                document.getElementById('onboardingForm').submit();
+            }, 50);
         }
 
-        async function copyMagicPrompt() {
-            const promptText = "Based on our past conversations, write a 4-sentence summary of my core interests, biggest goals, personality traits, and what kind of coaching/motivation style resonates best with me.";
-            const btn = document.getElementById('copyPromptBtn');
-            const label = document.getElementById('copyPromptLabel');
-
-            try {
-                if (navigator.clipboard && window.isSecureContext) {
-                    await navigator.clipboard.writeText(promptText);
-                } else {
-                    const textarea = document.createElement("textarea");
-                    textarea.value = promptText;
-                    textarea.style.position = "fixed";
-                    textarea.style.left = "-999999px";
-                    document.body.appendChild(textarea);
-                    textarea.focus();
-                    textarea.select();
-                    document.execCommand('copy');
-                    document.body.removeChild(textarea);
-                }
-
-                btn.classList.add('copied');
-                label.innerText = 'Copied to Clipboard! ✨';
-                setTimeout(() => {
-                    btn.classList.remove('copied');
-                    label.innerText = 'Copy Magic Prompt';
-                }, 2500);
-            } catch (err) {
-                console.error("Copy failed:", err);
-                label.innerText = 'Press Ctrl+C to copy';
+        function toggleInterest(chip) {
+            const topic = chip.getAttribute('data-topic');
+            if (selectedTopics.has(topic)) {
+                selectedTopics.delete(topic);
+                chip.classList.remove('selected');
+            } else {
+                selectedTopics.add(topic);
+                chip.classList.add('selected');
             }
+            document.getElementById('interestsInput').value = Array.from(selectedTopics).join(',');
         }
 
-        // Add loading state when submitting
-        document.getElementById('onboardingForm').addEventListener('submit', function() {
-            const btn = document.getElementById('submitBtn');
-            btn.innerHTML = '<span class="tiny-spinner"></span> Calibrating Your Coach...';
-            btn.style.opacity = '0.85';
-            btn.style.pointerEvents = 'none';
-        });
+        function expandTopics() {
+            document.querySelectorAll('.extra-topic').forEach(el => el.classList.add('visible'));
+            document.getElementById('customTopicInput').classList.add('visible');
+            document.getElementById('moreTopicsBtn').style.display = 'none';
+        }
+
+        function mergeCustomTopics() {
+            const customVal = document.getElementById('customTopicInput').value.trim();
+            if (customVal) {
+                customVal.split(',').map(s => s.trim()).filter(Boolean).forEach(t => selectedTopics.add(t));
+            }
+            document.getElementById('interestsInput').value = Array.from(selectedTopics).join(',');
+        }
+
+        function toggleDrawer() {
+            const drawer = document.getElementById('aiDrawer');
+            const arrow = document.getElementById('drawerArrow');
+            drawer.classList.toggle('open');
+            arrow.innerText = drawer.classList.contains('open') ? '▴' : '▾';
+        }
+
+        function copyMagicPrompt() {
+            navigator.clipboard.writeText(MAGIC_PROMPT);
+            const btn = document.getElementById('copyBtn');
+            btn.innerText = '✅ Copied';
+            setTimeout(() => { btn.innerText = '📋 Copy'; }, 2000);
+        }
     </script>
 </body>
 

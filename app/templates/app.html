@@ -1,212 +1,133 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
-    <title>Daily Motivation</title>
+    <title>Daily Motivation • Motiveate AI</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="/static/css/base.css?v=2.0">
-    <link rel="stylesheet" href="/static/css/app.css?v=2.0">
+    <link rel="stylesheet" href="/static/css/base.css?v=2.5">
+    <link rel="stylesheet" href="/static/css/app.css?v=2.5">
+    <!-- Instant theme initialization before paint -->
+    <!-- Instant theme initialization before paint (Supports Auto/System, Light, Dark) -->
+    <script>
+        (function() {
+            var themes = ['warm-sage', 'morning-sand', 'sky-mist', 'lavender-calm', 'peach-clay', 'mint-alabaster'];
+            var now = new Date();
+            var start = new Date(now.getFullYear(), 0, 0);
+            var diff = (now - start) + ((start.getTimezoneOffset() - now.getTimezoneOffset()) * 60 * 1000);
+            var dayOfYear = Math.floor(diff / (1000 * 60 * 60 * 24));
+            var theme = themes[Math.abs(dayOfYear) % themes.length];
+            document.documentElement.setAttribute('data-theme', theme);
+
+            var savedMode = localStorage.getItem('motiveate_theme_mode') || 'auto';
+            var isDark = savedMode === 'dark' || (savedMode === 'auto' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+            document.documentElement.setAttribute('data-mode', isDark ? 'dark' : 'light');
+        })();
+    </script>
     <!-- html2canvas for client-side $0 Story image generation -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <style>
-        /* Embedded Modal Design System to guarantee clean rendering */
-        .share-modal-box {
-            max-width: 440px !important;
-            background: #111827 !important;
-            border: 1px solid rgba(255, 255, 255, 0.1) !important;
-            border-radius: 22px !important;
-            padding: 24px !important;
-            box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.9) !important;
-        }
-
-        .share-options {
-            display: flex !important;
-            flex-direction: column !important;
-            gap: 10px !important;
-            margin-top: 14px !important;
-        }
-
-        .share-option-btn {
-            display: flex !important;
-            align-items: center !important;
-            gap: 14px !important;
-            background: #1e293b !important;
-            border: 1px solid rgba(255, 255, 255, 0.08) !important;
-            padding: 12px 16px !important;
-            border-radius: 14px !important;
-            color: #f8fafc !important;
-            cursor: pointer !important;
-            text-align: left !important;
-            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
-            width: 100% !important;
-            box-sizing: border-box !important;
-            outline: none !important;
-            font-family: inherit !important;
-        }
-
-        .share-option-btn:hover {
-            background: #283548 !important;
-            border-color: #6366f1 !important;
-            transform: translateY(-1px) !important;
-            box-shadow: 0 6px 18px rgba(99, 102, 241, 0.2) !important;
-        }
-
-        .share-option-btn:active {
-            transform: translateY(0) !important;
-        }
-
-        .share-icon-wrap {
-            width: 40px !important;
-            height: 40px !important;
-            border-radius: 12px !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            flex-shrink: 0 !important;
-            transition: transform 0.2s ease !important;
-        }
-
-        .share-option-btn:hover .share-icon-wrap {
-            transform: scale(1.08) !important;
-        }
-
-        .download-icon {
-            background: rgba(99, 102, 241, 0.18) !important;
-            color: #818cf8 !important;
-            border: 1px solid rgba(99, 102, 241, 0.3) !important;
-        }
-
-        .copy-img-icon {
-            background: rgba(168, 85, 247, 0.18) !important;
-            color: #c084fc !important;
-            border: 1px solid rgba(168, 85, 247, 0.3) !important;
-        }
-
-        .copy-text-icon {
-            background: rgba(16, 185, 129, 0.18) !important;
-            color: #34d399 !important;
-            border: 1px solid rgba(16, 185, 129, 0.3) !important;
-        }
-
-        .sys-share-icon {
-            background: rgba(245, 158, 11, 0.18) !important;
-            color: #fbbf24 !important;
-            border: 1px solid rgba(245, 158, 11, 0.3) !important;
-        }
-
-        .share-info {
-            display: flex !important;
-            flex-direction: column !important;
-            flex: 1 !important;
-            min-width: 0 !important;
-        }
-
-        .share-title {
-            font-size: 14px !important;
-            font-weight: 600 !important;
-            color: #f8fafc !important;
-            line-height: 1.3 !important;
-        }
-
-        .share-desc {
-            font-size: 12px !important;
-            color: #94a3b8 !important;
-            margin-top: 2px !important;
-            line-height: 1.35 !important;
-        }
-
-        .share-arrow {
-            font-size: 20px !important;
-            color: #64748b !important;
-            transition: all 0.2s ease !important;
-            flex-shrink: 0 !important;
-            font-weight: 300 !important;
-            margin-left: auto !important;
-        }
-
-        .share-option-btn:hover .share-arrow {
-            color: #818cf8 !important;
-            transform: translateX(3px) !important;
-        }
-    </style>
 </head>
 
 <body>
-    <div class="card" id="mainCard">
-        <!-- Loading Overlay -->
-        <div class="loader-overlay" id="cardLoader">
-            <div class="spinner"></div>
-            <div class="loader-text" id="loaderMsg">Crafting personalized quotes...</div>
-        </div>
-
-        <div class="top-bar">
-            <div class="pill-group">
-                <span class="pill" id="streakBadge">🔥 {{ streak }}</span>
-                <span class="buffer-pill" id="bufferStatus">
-                    <span class="tiny-spinner"></span> Syncing deck...
-                </span>
+    <div class="app-layout-wrapper">
+        <!-- Top Ad Container (Responsive, Eye-Friendly & Google AdSense Ready) -->
+        <div class="ad-slot ad-top" id="adTop">
+            <span class="ad-label">Sponsored</span>
+            <div class="ad-content-placeholder">
+                <!-- Google AdSense <ins class="adsbygoogle" ...></ins> snippet slot -->
+                <span class="ad-fallback-text">Ad space available</span>
             </div>
-            <span>{{ session_user }} • <a href="/logout" class="logout-link">Switch</a></span>
         </div>
 
-        <!-- Animated Quote Stage -->
-        <div class="quote-stage" id="quoteStage">
-            <p class="quote-body" id="quoteText">“{{ quote_text }}”</p>
+        <div class="card quote-card" id="mainCard">
+            <!-- Loading Overlay -->
+            <div class="loader-overlay" id="cardLoader">
+                <div class="spinner"></div>
+                <div class="loader-text" id="loaderMsg">Crafting personalized quotes...</div>
+            </div>
+
+            <div class="top-bar">
+                <div class="pill-group">
+                    <span class="pill" id="streakBadge">🔥 {{ streak }}</span>
+                    <span class="buffer-pill" id="bufferStatus">
+                        <span class="tiny-spinner"></span> Syncing deck...
+                    </span>
+                </div>
+                <div class="top-bar-right">
+                    <button class="theme-toggle-btn" id="themeToggleBtn" onclick="cycleThemeMode()" title="Toggle Theme (System / Light / Dark)">
+                        <span id="themeToggleIcon">🌓</span>
+                    </button>
+                    <span>{{ session_user }} • <a href="/logout" class="logout-link">Switch</a></span>
+                </div>
+            </div>
+
+            <!-- Animated Quote Stage -->
+            <div class="quote-stage" id="quoteStage">
+                <p class="quote-body" id="quoteText">“{{ quote_text }}”</p>
+            </div>
+
+            <div class="meta-row">
+                <span>🎯 {{ saved_goal }} • 🧠 {{ saved_mood }} • {{ voice_badge }} • {{ lang_badge }}</span>
+                <button class="edit-trigger" onclick="toggleModal(true)" title="Edit Mood, Goal, Voice & Language">✏️ Edit</button>
+            </div>
+
+            <audio id="voicePlayer" src="{{ audio_url }}"></audio>
+
+            <!-- Action Dock with Feedback, Voice, Download, Share & Next Card -->
+            <div class="action-dock">
+                <button class="icon-btn" id="likeBtn" onclick="sendFeedback('like')" title="Like this style">
+                    👍
+                </button>
+                <button class="icon-btn" id="dislikeBtn" onclick="sendFeedback('dislike')" title="Not my style">
+                    👎
+                </button>
+                <button class="icon-btn" id="voiceBtn" onclick="playVoice()" title="Listen ({{ voice_badge }})">
+                    🔊
+                </button>
+                <button class="icon-btn" id="downloadBtn" onclick="downloadQuoteCard()" title="Download Story Card (PNG)">
+                    📥
+                </button>
+                <button class="icon-btn" id="shareBtn" onclick="openShareModal()" title="Share & Export Options">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="18" cy="5" r="3"></circle>
+                        <circle cx="6" cy="12" r="3"></circle>
+                        <circle cx="18" cy="19" r="3"></circle>
+                        <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                        <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                    </svg>
+                </button>
+                <button class="icon-btn primary" id="moreBtn" onclick="showNextCard()" title="Instant Next Card">
+                    ✨ More
+                </button>
+            </div>
         </div>
 
-        <div class="meta-row">
-            <span>🎯 {{ saved_goal }} • 🧠 {{ saved_mood }} • {{ voice_badge }} • {{ lang_badge }}</span>
-            <button class="edit-trigger" onclick="toggleModal(true)" title="Edit Mood, Goal, Voice & Language">✏️ Edit</button>
-        </div>
-
-        <audio id="voicePlayer" src="{{ audio_url }}"></audio>
-
-        <!-- Upgraded Action Dock with Dedicated Download, Share & Voice Buttons -->
-        <div class="action-dock">
-            <button class="icon-btn" id="likeBtn" onclick="sendFeedback('like')" title="Like this style">
-                👍
-            </button>
-            <button class="icon-btn" id="dislikeBtn" onclick="sendFeedback('dislike')" title="Not my style">
-                👎
-            </button>
-            <button class="icon-btn" id="voiceBtn" onclick="playVoice()" title="Listen ({{ voice_badge }})">
-                🔊
-            </button>
-            <button class="icon-btn" id="downloadBtn" onclick="downloadQuoteCard()" title="Download Story Card (PNG)">
-                📥
-            </button>
-            <button class="icon-btn" id="shareBtn" onclick="openShareModal()" title="Share & Export Options">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="18" cy="5" r="3"></circle>
-                    <circle cx="6" cy="12" r="3"></circle>
-                    <circle cx="18" cy="19" r="3"></circle>
-                    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
-                    <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
-                </svg>
-            </button>
-            <button class="icon-btn primary" onclick="showNextCard()" title="Instant Next Card">
-                ✨ More
-            </button>
+        <!-- Bottom Ad Container (Responsive, Eye-Friendly & Google AdSense Ready) -->
+        <div class="ad-slot ad-bottom" id="adBottom">
+            <span class="ad-label">Sponsored</span>
+            <div class="ad-content-placeholder">
+                <!-- Google AdSense <ins class="adsbygoogle" ...></ins> snippet slot -->
+                <span class="ad-fallback-text">Ad space available</span>
+            </div>
         </div>
     </div>
 
     <!-- Off-Screen 9:16 Vertical Story Card for High-Res Image Export (With Watermark) -->
     <div id="storyExportWrapper" style="position: fixed; left: -9999px; top: 0;">
         <div id="storyExportCard"
-            style="width: 540px; height: 960px; background: linear-gradient(145deg, #090d16 0%, #111827 55%, #1e1b4b 100%); color: #f8fafc; padding: 64px 48px; display: flex; flex-direction: column; justify-content: space-between; font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif; border-radius: 0;">
+            style="width: 540px; height: 960px; background: linear-gradient(145deg, #0f172a 0%, #1e293b 55%, #334155 100%); color: #f8fafc; padding: 64px 48px; display: flex; flex-direction: column; justify-content: space-between; font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif; border-radius: 0;">
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <span
-                    style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); padding: 8px 18px; border-radius: 999px; font-size: 16px; font-weight: 600; color: #e2e8f0;">
+                    style="background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.18); padding: 8px 18px; border-radius: 999px; font-size: 16px; font-weight: 600; color: #f8fafc;">
                     🔥 Day <span id="exportStreak">{{ streak }}</span> Streak
                 </span>
-                <span style="color: #818cf8; font-size: 15px; font-weight: 600; letter-spacing: 0.04em;">
+                <span style="color: #93c5fd; font-size: 15px; font-weight: 600; letter-spacing: 0.04em;">
                     🎯 {{ saved_goal }}
                 </span>
             </div>
 
-            <div style="my: auto; padding: 0 10px;">
+            <div style="margin: auto 0; padding: 0 10px;">
                 <div
-                    style="font-size: 56px; color: #6366f1; line-height: 1; margin-bottom: 16px; font-family: Georgia, serif;">
+                    style="font-size: 56px; color: #60a5fa; line-height: 1; margin-bottom: 16px; font-family: Georgia, serif;">
                     “</div>
                 <p id="exportQuoteText"
                     style="font-size: 34px; font-weight: 600; line-height: 1.48; color: #ffffff; margin: 0; letter-spacing: -0.01em;">
@@ -214,15 +135,15 @@
                 </p>
             </div>
 
-            <!-- Viral Watermark Footer (Free Marketing!) -->
+            <!-- Viral Watermark Footer -->
             <div
-                style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 24px; display: flex; justify-content: space-between; align-items: center;">
+                style="border-top: 1px solid rgba(255,255,255,0.14); padding-top: 24px; display: flex; justify-content: space-between; align-items: center;">
                 <div>
                     <div style="font-size: 16px; font-weight: 700; color: #f8fafc;">✨ Motiveate AI</div>
-                    <div style="font-size: 13px; color: #94a3b8;">Personalized Daily Mindset Coach</div>
+                    <div style="font-size: 13px; color: #cbd5e1;">Personalized Daily Mindset Coach</div>
                 </div>
                 <div
-                    style="background: #6366f1; color: white; padding: 6px 14px; border-radius: 999px; font-size: 13px; font-weight: 600;">
+                    style="background: #3b82f6; color: white; padding: 6px 14px; border-radius: 999px; font-size: 13px; font-weight: 600;">
                     motiveate.app
                 </div>
             </div>
@@ -257,14 +178,29 @@
                     <option value="male" {{ 'selected' if saved_voice=='male' else '' }}>👨 Male (Deep & Calm)</option>
                 </select>
 
-                <button type="submit" class="save-btn">Save & Refresh Deck ✨</button>
+                <span class="field-label">Appearance / Theme</span>
+                <select name="theme_mode" id="themeModeSelect" onchange="setThemeMode(this.value)">
+                    <option value="auto" {{ 'selected' if saved_theme_mode=='auto' else '' }}>🌓 System Preference (Auto)</option>
+                    <option value="light" {{ 'selected' if saved_theme_mode=='light' else '' }}>☀️ Light (Daily Pastels)</option>
+                    <option value="dark" {{ 'selected' if saved_theme_mode=='dark' else '' }}>🌙 Dark (Midnight Obsidian)</option>
+                </select>
 
-                <div style="text-align: center; margin-top: 8px; padding-top: 10px; border-top: 1px solid rgba(255, 255, 255, 0.08);">
-                    <a href="/onboarding" style="color: #818cf8; font-size: 12.5px; text-decoration: none; font-weight: 500; display: inline-flex; align-items: center; gap: 5px;">
-                        <span>🎯</span> Calibrate Interests & AI Persona →
+                <button type="submit" class="save-btn">Save &amp; Refresh Deck ✨</button>
+
+                <div style="text-align: center; margin-top: 8px; padding-top: 10px; border-top: 1px solid var(--border-subtle);">
+                    <a href="/onboarding" style="color: var(--accent); font-size: 12.5px; text-decoration: none; font-weight: 500; display: inline-flex; align-items: center; gap: 5px;">
+                        <span>🎯</span> Calibrate Interests &amp; AI Persona →
                     </a>
                 </div>
             </form>
+
+            <!-- Feature 5: Subtle Delete Account Option with JS Confirm -->
+            <div class="delete-account-section">
+                <button type="button" class="delete-account-btn" onclick="confirmDeleteAccount()">
+                    🗑️ Delete Account
+                </button>
+            </div>
+            <form id="deleteAccountForm" method="post" action="/auth/delete-account" style="display: none;"></form>
         </div>
     </div>
 
@@ -273,8 +209,8 @@
         <div class="modal-box share-modal-box">
             <div class="modal-header">
                 <div>
-                    <h3 style="margin: 0; font-size: 17px; font-weight: 600; color: #f8fafc;">Share &amp; Export</h3>
-                    <p style="margin: 2px 0 0 0; font-size: 12px; color: #94a3b8;">Save or share your personalized motivation card</p>
+                    <h3 style="margin: 0; font-size: 17px; font-weight: 600; color: var(--text-primary);">Share &amp; Export</h3>
+                    <p style="margin: 2px 0 0 0; font-size: 12px; color: var(--text-muted);">Save or share your personalized motivation card</p>
                 </div>
                 <button class="close-btn" onclick="closeShareModal()" aria-label="Close">✕</button>
             </div>
@@ -345,10 +281,15 @@
         window.INITIAL_STATE = {
             quote: {{ quote_text | tojson }},
             audioUrl: {{ audio_url | tojson }},
-            streak: {{ streak | tojson }}
+            streak: {{ streak | tojson }},
+            maxStreak: {{ max_streak | tojson }},
+            dailyCount: {{ daily_count | tojson }},
+            dailyCards: {{ daily_cards | tojson }},
+            themeMode: {{ saved_theme_mode | tojson }},
+            limitReached: {{ (daily_count >= 3) | tojson }}
         };
     </script>
-    <script src="/static/js/app.js?v=2.0"></script>
+    <script src="/static/js/app.js?v=2.5"></script>
 </body>
 
 </html>

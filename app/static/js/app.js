@@ -1,32 +1,154 @@
+// Daily Motivation App Logic • Motiveate AI
 const state = window.INITIAL_STATE || {};
 let currentQuote = state.quote || "";
 let currentAudioUrl = state.audioUrl || "";
 let currentStreak = state.streak || 1;
+let maxStreak = state.maxStreak || 1;
+let dailyCount = state.dailyCount || 0;
+let savedDailyCards = Array.isArray(state.dailyCards) ? [...state.dailyCards] : [];
+let limitReached = !!state.limitReached || dailyCount >= 3;
+
 let quoteQueue = [];
 let isFetchingBatch = false;
 let isGeneratingAudio = false;
+
+// 3 Quotes Per Day Limit & Friendly Completion Message
+const COMPLETION_MESSAGE = "🌿 You've completed your 3 mindful quotes for today. Come back tomorrow to grow your streak!";
+let isShowingCompletionMessage = false;
+let cycleCardIndex = 0;
 
 // Cache generated audio URLs by quote text so replaying is 100% free
 const audioCache = {};
 if (currentAudioUrl && currentQuote) {
     audioCache[currentQuote] = currentAudioUrl;
 }
+if (currentQuote && savedDailyCards.length === 0) {
+    savedDailyCards.push({ quote: currentQuote, audio_url: currentAudioUrl });
+}
 
+// DOM Elements
 const stage = document.getElementById('quoteStage');
 const quoteEl = document.getElementById('quoteText');
 const player = document.getElementById('voicePlayer');
 const likeBtn = document.getElementById('likeBtn');
+const dislikeBtn = document.getElementById('dislikeBtn');
 const voiceBtn = document.getElementById('voiceBtn');
 const downloadBtn = document.getElementById('downloadBtn');
 const shareBtn = document.getElementById('shareBtn');
+const moreBtn = document.getElementById('moreBtn');
 const streakBadge = document.getElementById('streakBadge');
 const bufferStatus = document.getElementById('bufferStatus');
 const cardLoader = document.getElementById('cardLoader');
 const loaderMsg = document.getElementById('loaderMsg');
+const themeToggleBtn = document.getElementById('themeToggleBtn');
+const themeToggleIcon = document.getElementById('themeToggleIcon');
+const themeModeSelect = document.getElementById('themeModeSelect');
 
+// 1. Daily Eye-Friendly Themes Rotation (6 Soothing Palettes)
+const THEMES = [
+    'warm-sage',
+    'morning-sand',
+    'sky-mist',
+    'lavender-calm',
+    'peach-clay',
+    'mint-alabaster'
+];
+
+function applyDailyTheme() {
+    const now = new Date();
+    const start = new Date(now.getFullYear(), 0, 0);
+    const diff = (now - start) + ((start.getTimezoneOffset() - now.getTimezoneOffset()) * 60 * 1000);
+    const dayOfYear = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const themeIndex = Math.abs(dayOfYear) % THEMES.length;
+    const activeTheme = THEMES[themeIndex];
+    document.documentElement.setAttribute('data-theme', activeTheme);
+    if (document.body) {
+        document.body.setAttribute('data-theme', activeTheme);
+    }
+}
+applyDailyTheme();
+
+// 1b. Light / Dark / System Preference Mode Management
+let currentThemeMode = localStorage.getItem('motiveate_theme_mode') || state.themeMode || 'auto';
+
+function applyThemeMode(mode) {
+    let resolvedDark = false;
+    if (mode === 'dark') {
+        resolvedDark = true;
+    } else if (mode === 'light') {
+        resolvedDark = false;
+    } else {
+        // System preference
+        resolvedDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    }
+
+    document.documentElement.setAttribute('data-mode', resolvedDark ? 'dark' : 'light');
+    if (document.body) {
+        document.body.setAttribute('data-mode', resolvedDark ? 'dark' : 'light');
+    }
+
+    // Update Top Bar Toggle Button Icon & Tooltip
+    const iconEl = document.getElementById('themeToggleIcon');
+    const toggleBtn = document.getElementById('themeToggleBtn');
+    if (iconEl && toggleBtn) {
+        if (mode === 'auto') {
+            iconEl.innerText = '🌓';
+            toggleBtn.title = `Theme: System (${resolvedDark ? 'Dark' : 'Light'}) • Click for Light`;
+        } else if (mode === 'light') {
+            iconEl.innerText = '☀️';
+            toggleBtn.title = 'Theme: Light • Click for Dark';
+        } else {
+            iconEl.innerText = '🌙';
+            toggleBtn.title = 'Theme: Dark • Click for System';
+        }
+    }
+
+    // Sync modal select dropdown if present
+    const selectEl = document.getElementById('themeModeSelect');
+    if (selectEl && selectEl.value !== mode) {
+        selectEl.value = mode;
+    }
+}
+
+function setThemeMode(mode) {
+    if (!['auto', 'light', 'dark'].includes(mode)) mode = 'auto';
+    currentThemeMode = mode;
+    try {
+        localStorage.setItem('motiveate_theme_mode', mode);
+    } catch (e) {}
+    applyThemeMode(mode);
+}
+
+function cycleThemeMode() {
+    if (currentThemeMode === 'auto') {
+        setThemeMode('light');
+    } else if (currentThemeMode === 'light') {
+        setThemeMode('dark');
+    } else {
+        setThemeMode('auto');
+    }
+}
+
+// Listen to System OS Theme Changes in real-time
+if (window.matchMedia) {
+    try {
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+            if (currentThemeMode === 'auto') {
+                applyThemeMode('auto');
+            }
+        });
+    } catch (e) {}
+}
+
+applyThemeMode(currentThemeMode);
+
+// 2. Buffer & Limit Status Display
 function updateBufferBadge() {
+    if (!bufferStatus) return;
     if (isFetchingBatch && quoteQueue.length === 0) {
-        bufferStatus.innerHTML = '<span class="tiny-spinner"></span> Preloading...';
+        bufferStatus.innerHTML = '<span class="tiny-spinner"></span> Syncing deck...';
+    } else if (limitReached && quoteQueue.length === 0) {
+        bufferStatus.innerHTML = '🌿 3 of 3 complete';
     } else if (quoteQueue.length > 0) {
         bufferStatus.innerHTML = '⚡ ' + quoteQueue.length + ' ready';
     } else {
@@ -34,9 +156,14 @@ function updateBufferBadge() {
     }
 }
 
-// Prefetch 3 quotes in the background (Fast & Free—no upfront TTS!)
+// 3. Prefetch quotes respecting daily limit (Fast & Free—no upfront TTS!)
 async function prefetchQuotes() {
     if (isFetchingBatch) return;
+    if (limitReached && quoteQueue.length === 0) {
+        updateBufferBadge();
+        return;
+    }
+
     isFetchingBatch = true;
     updateBufferBadge();
     try {
@@ -44,7 +171,21 @@ async function prefetchQuotes() {
         if (res.ok) {
             const data = await res.json();
             if (data.cards && data.cards.length > 0) {
-                quoteQueue.push(...data.cards);
+                for (const c of data.cards) {
+                    if (c && c.quote && !quoteQueue.some(q => q.quote === c.quote)) {
+                        quoteQueue.push(c);
+                    }
+                }
+            }
+            if (data.daily_cards && data.daily_cards.length > 0) {
+                savedDailyCards = data.daily_cards;
+            }
+            if (data.limit_reached !== undefined) {
+                limitReached = data.limit_reached;
+            }
+            if (data.streak !== undefined) {
+                currentStreak = data.streak;
+                if (streakBadge) streakBadge.innerText = '🔥 ' + currentStreak;
             }
         }
     } catch (err) {
@@ -55,67 +196,152 @@ async function prefetchQuotes() {
     }
 }
 
-// Smoothly animate to the next card
-async function showNextCard() {
-    if (quoteQueue.length === 0) {
-        loaderMsg.innerText = 'Crafting fresh personalized quotes...';
-        cardLoader.classList.add('active');
-        await prefetchQuotes();
-        cardLoader.classList.remove('active');
-    }
-
-    const nextItem = quoteQueue.shift();
-    if (!nextItem) return;
-
-    updateBufferBadge();
-
-    if (quoteQueue.length <= 1) {
-        prefetchQuotes();
-    }
-
-    // Stop any playing audio before switching card
-    if (player) {
-        player.pause();
-        player.currentTime = 0;
-    }
-
+// 4. Smooth Card Transition Helper
+function displayCard(quote, audioUrl) {
+    if (!stage || !quoteEl) return;
     stage.classList.add('slide-out-left');
 
     setTimeout(() => {
-        currentQuote = nextItem.quote;
-        currentAudioUrl = audioCache[currentQuote] || nextItem.audio_url || "";
+        currentQuote = quote;
+        currentAudioUrl = audioCache[quote] || audioUrl || "";
         quoteEl.innerText = '“' + currentQuote + '”';
-        player.src = currentAudioUrl;
+        if (player) player.src = currentAudioUrl;
 
-        // Reset button states & increment streak badge
-        likeBtn.classList.remove('active-like');
-        likeBtn.innerHTML = '👍';
-        voiceBtn.innerHTML = '🔊';
-        currentStreak += 1;
-        streakBadge.innerText = '🔥 ' + currentStreak;
+        // Reset action dock states
+        if (likeBtn) {
+            likeBtn.classList.remove('active-like');
+            likeBtn.innerHTML = '👍';
+        }
+        if (dislikeBtn) dislikeBtn.style.opacity = '1';
+        if (voiceBtn) {
+            voiceBtn.innerHTML = '🔊';
+            voiceBtn.title = 'Listen to voice';
+            voiceBtn.style.opacity = '1';
+        }
+
+        // Streak badge reflects true daily date streak (NEVER increment on More click)
+        if (streakBadge) streakBadge.innerText = '🔥 ' + currentStreak;
 
         stage.classList.remove('slide-out-left');
         stage.classList.add('slide-in-right');
 
         void stage.offsetWidth;
         stage.classList.remove('slide-in-right');
-    }, 260);
+    }, 240);
 }
 
-// ON-DEMAND VOICE GENERATION (Saves 80% of Cloud TTS costs!)
+function displayCompletionMessage() {
+    if (!stage || !quoteEl) return;
+    stage.classList.add('slide-out-left');
+
+    setTimeout(() => {
+        currentQuote = COMPLETION_MESSAGE;
+        currentAudioUrl = "";
+        quoteEl.innerText = COMPLETION_MESSAGE;
+        if (player) {
+            player.pause();
+            player.src = "";
+        }
+
+        if (likeBtn) {
+            likeBtn.classList.remove('active-like');
+            likeBtn.innerHTML = '🌱';
+        }
+        if (voiceBtn) {
+            voiceBtn.innerHTML = '✨';
+            voiceBtn.title = 'Completed for today';
+        }
+
+        if (streakBadge) streakBadge.innerText = '🔥 ' + currentStreak;
+        if (bufferStatus) bufferStatus.innerHTML = '🌿 3 of 3 complete';
+
+        stage.classList.remove('slide-out-left');
+        stage.classList.add('slide-in-right');
+
+        void stage.offsetWidth;
+        stage.classList.remove('slide-in-right');
+    }, 240);
+}
+
+// 5. Show Next Card or Cycle Through Today's 3 Saved Cards
+async function showNextCard() {
+    if (player) {
+        player.pause();
+        player.currentTime = 0;
+    }
+
+    // Case A: Quotes remaining in queue
+    if (quoteQueue.length > 0) {
+        const nextItem = quoteQueue.shift();
+        isShowingCompletionMessage = false;
+        displayCard(nextItem.quote, nextItem.audio_url);
+        updateBufferBadge();
+        if (!limitReached && quoteQueue.length <= 1) {
+            prefetchQuotes();
+        }
+        return;
+    }
+
+    // Case B: Queue empty, try prefetch if limit not yet reached
+    if (!limitReached) {
+        if (loaderMsg && cardLoader) {
+            loaderMsg.innerText = 'Crafting fresh personalized quotes...';
+            cardLoader.classList.add('active');
+        }
+        await prefetchQuotes();
+        if (cardLoader) cardLoader.classList.remove('active');
+
+        if (quoteQueue.length > 0) {
+            const nextItem = quoteQueue.shift();
+            isShowingCompletionMessage = false;
+            displayCard(nextItem.quote, nextItem.audio_url);
+            updateBufferBadge();
+            return;
+        }
+    }
+
+    // Case C: All 3 quotes for today have been viewed & limit_reached is true
+    // Alternate between completion message and cycling through today's 3 saved cards
+    if (!isShowingCompletionMessage) {
+        isShowingCompletionMessage = true;
+        displayCompletionMessage();
+        cycleCardIndex = 0;
+        return;
+    }
+
+    // In cycling mode: cycle through saved daily cards
+    if (savedDailyCards.length > 0) {
+        if (cycleCardIndex < savedDailyCards.length) {
+            const card = savedDailyCards[cycleCardIndex];
+            cycleCardIndex++;
+            isShowingCompletionMessage = false;
+            displayCard(card.quote, card.audio_url);
+        } else {
+            // Once cycle reaches end, show friendly completion message again
+            isShowingCompletionMessage = true;
+            displayCompletionMessage();
+            cycleCardIndex = 0;
+        }
+    } else {
+        displayCompletionMessage();
+    }
+}
+
+// 6. On-Demand Voice Generation (Saves 80% of Cloud TTS costs!)
 async function playVoice() {
     if (isGeneratingAudio) return;
+    if (isShowingCompletionMessage) {
+        return;
+    }
 
-    // 1. If we already generated audio for this quote, play immediately from cache!
     if (audioCache[currentQuote]) {
         player.src = audioCache[currentQuote];
         player.play();
         return;
     }
 
-    // 2. Otherwise, synthesize audio on-demand via /api/tts
     isGeneratingAudio = true;
-    voiceBtn.innerHTML = '<span class="tiny-spinner"></span>';
+    if (voiceBtn) voiceBtn.innerHTML = '<span class="tiny-spinner"></span>';
     try {
         const res = await fetch('/api/tts', {
             method: 'POST',
@@ -134,15 +360,21 @@ async function playVoice() {
         console.error('TTS error:', err);
     } finally {
         isGeneratingAudio = false;
-        voiceBtn.innerHTML = '🔊';
+        if (voiceBtn) voiceBtn.innerHTML = '🔊';
     }
 }
 
-// HELPER: Generate 1080x1920 high-res Story card blob via html2canvas
+// 7. High-Res 9:16 Story Card Blob Generator
 async function generateCardBlob() {
     const exportQuote = document.getElementById('exportQuoteText');
     const exportStreak = document.getElementById('exportStreak');
-    if (exportQuote) exportQuote.innerText = currentQuote;
+
+    let quoteToExport = currentQuote;
+    if (isShowingCompletionMessage && savedDailyCards.length > 0) {
+        quoteToExport = savedDailyCards[0].quote;
+    }
+
+    if (exportQuote) exportQuote.innerText = quoteToExport;
     if (exportStreak) exportStreak.innerText = currentStreak;
 
     const exportEl = document.getElementById('storyExportCard');
@@ -150,7 +382,7 @@ async function generateCardBlob() {
 
     const canvas = await html2canvas(exportEl, {
         scale: 2, // 1080x1920 Full HD resolution
-        backgroundColor: '#090d16',
+        backgroundColor: '#0f172a',
         useCORS: true
     });
 
@@ -159,7 +391,6 @@ async function generateCardBlob() {
     });
 }
 
-// HELPER: Trigger instant file download in browser
 function triggerDownload(blob, filename) {
     const link = document.createElement('a');
     link.download = filename || `motiveate-day-${currentStreak}.png`;
@@ -170,7 +401,6 @@ function triggerDownload(blob, filename) {
     setTimeout(() => URL.revokeObjectURL(link.href), 1500);
 }
 
-// 1-CLICK INSTANT PNG DOWNLOAD (Direct to computer / Downloads folder)
 async function downloadQuoteCard() {
     const btn = document.getElementById('downloadBtn');
     const originalText = btn ? btn.innerHTML : '📥';
@@ -190,7 +420,7 @@ async function downloadQuoteCard() {
     }
 }
 
-// Modal controls for Export & Share
+// 8. Modal Controls for Export & Share
 function openShareModal() {
     const modal = document.getElementById('shareModal');
     if (modal) modal.classList.add('open');
@@ -201,7 +431,6 @@ function closeShareModal() {
     if (modal) modal.classList.remove('open');
 }
 
-// Download option inside the Share modal
 async function downloadFromShare() {
     const btn = document.getElementById('modalDownloadBtn');
     const titleEl = btn ? btn.querySelector('.share-title') : null;
@@ -235,7 +464,6 @@ async function downloadFromShare() {
     }
 }
 
-// Copy Image directly to clipboard (for WhatsApp Web, Slack, Discord)
 async function copyImageToClipboard() {
     const btn = document.getElementById('modalCopyImgBtn');
     const titleEl = btn ? btn.querySelector('.share-title') : null;
@@ -278,7 +506,6 @@ async function copyImageToClipboard() {
     }
 }
 
-// Copy quote text to clipboard
 async function copyQuoteText() {
     const btn = document.getElementById('modalCopyTextBtn');
     const titleEl = btn ? btn.querySelector('.share-title') : null;
@@ -286,7 +513,10 @@ async function copyQuoteText() {
     const iconEl = btn ? btn.querySelector('.share-icon-wrap') : null;
 
     try {
-        const textToCopy = `“${currentQuote}” — via Motiveate AI (Day ${currentStreak})`;
+        const quoteToShare = isShowingCompletionMessage && savedDailyCards.length > 0
+            ? savedDailyCards[0].quote
+            : currentQuote;
+        const textToCopy = `“${quoteToShare}” — via Motiveate AI (Day ${currentStreak})`;
         await navigator.clipboard.writeText(textToCopy);
         if (titleEl) titleEl.innerText = 'Quote Text Copied! ✅';
         if (descEl) descEl.innerText = 'Ready to paste in messages or notes';
@@ -306,7 +536,6 @@ async function copyQuoteText() {
     }
 }
 
-// System share sheet (triggers Windows Share / Mobile share) with automatic download option
 async function triggerSystemShare() {
     const btn = document.getElementById('modalSysShareBtn');
     const titleEl = btn ? btn.querySelector('.share-title') : null;
@@ -349,10 +578,14 @@ async function triggerSystemShare() {
     }
 }
 
+// 9. Feedback
 async function sendFeedback(action) {
+    if (isShowingCompletionMessage) return;
     if (action === 'like') {
-        likeBtn.classList.add('active-like');
-        likeBtn.innerHTML = '❤️';
+        if (likeBtn) {
+            likeBtn.classList.add('active-like');
+            likeBtn.innerHTML = '❤️';
+        }
     }
     fetch('/api/feedback', {
         method: 'POST',
@@ -364,6 +597,7 @@ async function sendFeedback(action) {
     }
 }
 
+// 10. Modals & Preferences
 function toggleModal(show) {
     const modal = document.getElementById('editModal');
     if (show) modal.classList.add('open');
@@ -372,8 +606,20 @@ function toggleModal(show) {
 
 function showModalLoading() {
     toggleModal(false);
-    loaderMsg.innerText = 'Updating your preferences & voice...';
-    cardLoader.classList.add('active');
+    if (loaderMsg && cardLoader) {
+        loaderMsg.innerText = 'Updating your preferences & voice...';
+        cardLoader.classList.add('active');
+    }
+}
+
+// 11. Feature 5: Delete Account Confirmation
+function confirmDeleteAccount() {
+    if (confirm("Are you sure you want to permanently delete your account and all saved data?")) {
+        const form = document.getElementById("deleteAccountForm");
+        if (form) {
+            form.submit();
+        }
+    }
 }
 
 // Close modal if user clicks outside modal box
@@ -383,7 +629,7 @@ window.addEventListener('click', (e) => {
     }
 });
 
-// Keyboard shortcuts: Space / Right Arrow for next card, L to like, S to share modal, D to download
+// Keyboard shortcuts
 window.addEventListener('keydown', (e) => {
     const editModal = document.getElementById('editModal');
     const shareModal = document.getElementById('shareModal');
@@ -415,7 +661,11 @@ window.triggerSystemShare = triggerSystemShare;
 window.sendFeedback = sendFeedback;
 window.toggleModal = toggleModal;
 window.showModalLoading = showModalLoading;
+window.confirmDeleteAccount = confirmDeleteAccount;
+window.cycleThemeMode = cycleThemeMode;
+window.setThemeMode = setThemeMode;
 
+// Initial Load & Prefetch
 if (document.readyState === 'loading') {
     window.addEventListener('DOMContentLoaded', () => {
         prefetchQuotes();
