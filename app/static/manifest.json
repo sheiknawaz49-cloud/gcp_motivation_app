@@ -1,0 +1,25 @@
+{
+  "name": "Motiveate AI",
+  "short_name": "Motiveate",
+  "description": "Personalized daily mindset coaching & motivation quotes powered by AI",
+  "start_url": "/app",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#eef5f0",
+  "theme_color": "#eef5f0",
+  "icons": [
+    {
+      "src": "/static/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/static/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
